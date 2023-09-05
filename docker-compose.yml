@@ -1,0 +1,14 @@
+services:
+  jekyll:
+    image: jekyll:latest
+    build:
+      context: .
+      dockerfile: jekyll.Dockerfile
+    ports:
+      - 4000:4000
+    volumes:
+      - .:/home/jekyll
+    working_dir: /home/jekyll
+    tty: true
+    container_name: jekyll
+    command: ["bundle", "exec", "jekyll", "serve"]
