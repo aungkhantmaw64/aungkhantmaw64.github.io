@@ -1,14 +1,7 @@
 services:
   jekyll:
-    image: jekyll:latest
-    build:
-      context: .
-      dockerfile: jekyll.Dockerfile
-    ports:
-      - 4000:4000
+    image: bretfisher/jekyll-serve 
     volumes:
-      - .:/home/jekyll
-    working_dir: /home/jekyll
-    tty: true
-    container_name: jekyll
-    command: ["bundle", "exec", "jekyll", "serve"]
+      - .:/site
+    ports:
+      - '4000:4000'
