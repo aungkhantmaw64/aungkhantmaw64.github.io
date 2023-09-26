@@ -15,7 +15,7 @@ After reading this post, you will be able to -
 - Implement the algorithm from scratch just using the python math library such as numpy
 - Implement the algorithm using the tensorflow framework.
 
-Before we dive deep into the mathematical part of the algorithm, it is beneficial to treat it as a black box that accepts an array of values (features representation) that describe an object (training example/input observation) and conduct predictions (inference) to determine the object's class in terms of probability.
+Before we dive deep into the mathematical part of the algorithm, it is beneficial to treat it as a black box that accepts an array of values (**features representation**) that describe an object (**training example/input observation**) and conduct predictions (**inference**) to determine the object's class in terms of probability.
 
 # References
 
