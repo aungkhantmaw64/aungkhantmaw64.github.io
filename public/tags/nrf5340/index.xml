@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>NRF5340 on Mutex Control</title>
+    <link>//localhost:1313/tags/nrf5340/</link>
+    <description>Recent content in NRF5340 on Mutex Control</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 26 Sep 2024 22:50:49 +0700</lastBuildDate>
+    <atom:link href="//localhost:1313/tags/nrf5340/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>ZPE02: Blinky Application With Zephyr Project</title>
+      <link>//localhost:1313/post/zpe002/zpe002/</link>
+      <pubDate>Thu, 26 Sep 2024 22:50:49 +0700</pubDate>
+      <guid>//localhost:1313/post/zpe002/zpe002/</guid>
+      <description>&lt;p&gt;&lt;em&gt;Learn how to fully utilize Zephyr Project GPIO APIs&lt;/em&gt;&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

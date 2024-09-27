@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>ZPE02: Blinky Application With Zephyr Project - Mutex Control</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+		<meta property="og:url" content="//localhost:1313/post/zpe002/zpe002/">
+  <meta property="og:site_name" content="Mutex Control">
+  <meta property="og:title" content="ZPE02: Blinky Application With Zephyr Project">
+  <meta property="og:description" content="Learn how to fully utilize Zephyr Project GPIO APIs">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="post">
+    <meta property="article:published_time" content="2024-09-26T22:50:49+07:00">
+    <meta property="article:modified_time" content="2024-09-26T22:50:49+07:00">
+    <meta property="article:tag" content="Device Tree">
+    <meta property="article:tag" content="Zephyrproject">
+    <meta property="article:tag" content="NRF5340">
+    <meta property="article:tag" content="Docker">
+
+		
+  <meta itemprop="name" content="ZPE02: Blinky Application With Zephyr Project">
+  <meta itemprop="description" content="Learn how to fully utilize Zephyr Project GPIO APIs">
+  <meta itemprop="datePublished" content="2024-09-26T22:50:49+07:00">
+  <meta itemprop="dateModified" content="2024-09-26T22:50:49+07:00">
+  <meta itemprop="wordCount" content="3700">
+  <meta itemprop="keywords" content="Device Tree,Zephyrproject,NRF5340,Docker">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+
+	<link rel="stylesheet" href="/css/style.css">
+	
+
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="Mutex Control" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">Mutex Control</div>
+					<div class="logo__tagline">Building Blocks of Tomorrow: Embedded Systems Unveiled</div>
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">Menu</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/about/">
+				
+				<span class="menu__text">About</span>
+				
+			</a>
+		</li>
+		<li class="menu__item menu__item--active">
+			<a class="menu__link" href="/post/">
+				
+				<span class="menu__text">Post</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">ZPE02: Blinky Application With Zephyr Project</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-09-26T22:50:49&#43;07:00">September 26, 2024</time></div></div>
+		</header>
+		
+	<figure class="post__thumbnail thumbnail">
+		
+		<img class="thumbnail__image" src="/images/zpe002-cover.png" alt="ZPE02: Blinky Application With Zephyr Project">
+		
+	</figure><div class="content post__content clearfix">
+			<p><em>Learn how to fully utilize Zephyr Project GPIO APIs</em></p>
+<hr>
+<h1 id="getting-to-know-board-level-device-trees">Getting To Know Board-Level Device Trees</h1>
+<p>Now that we understand device tree syntax from the previous article, let us start getting our hands dirty by writing a basic application using NRF5340 DK (development kit) board that accepts user inputs from push buttons and blink some of the on-board LEDs based on those inputs. Plus, we will explore a few standard device tree node properties along the way. Starting with the hardware, the following picture provides a quick overview of the board with numerical annotations on some areas of interest for this article.</p>
+<p><img src="/post/zpe002/nrf5340dk_top_view.jpg" alt="dt-build-flow"></p>
+<p>In the above image, the annotated components are:</p>
+<ol>
+<li>
+<p>User LEDs</p>
+</li>
+<li>
+<p>NRF5340 SoC</p>
+</li>
+<li>
+<p>User buttons</p>
+</li>
+<li>
+<p>Antenna connector for NFC</p>
+</li>
+<li>
+<p>Reset button</p>
+</li>
+<li>
+<p>Pin Connectors</p>
+</li>
+<li>
+<p>Slider switch for power sources</p>
+</li>
+<li>
+<p>Power-on switch</p>
+</li>
+<li>
+<p>USB connector for on-board J-Link Debugger</p>
+</li>
+</ol>
+<p>A key advantage of using device tree is that application developers don’t need to consult schematics to understand how components like LEDs and buttons are connected to the SoC.
+A quick look at the vendor-provided board-level DTS (Device Tree Sources) would give us the information we need to utilize the on-board peripheral devices. For example, one of the NRF5340 DK device tree sources describes the on-board LEDs as:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>leds <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>  compatible <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;gpio-leds&#34;</span>;
+</span></span><span style="display:flex;"><span>  led0: led_0 <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    gpios <span style="color:#f92672">=</span> &lt;&amp;gpio0 <span style="color:#ae81ff">28</span> GPIO_ACTIVE_LOW&gt;;
+</span></span><span style="display:flex;"><span>    label <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Green LED 0&#34;</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">}</span>;
+</span></span><span style="display:flex;"><span>  led1: led_1 <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    gpios <span style="color:#f92672">=</span> &lt;&amp;gpio0 <span style="color:#ae81ff">29</span> GPIO_ACTIVE_LOW&gt;;
+</span></span><span style="display:flex;"><span>    label <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Green LED 1&#34;</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">}</span>;
+</span></span><span style="display:flex;"><span>  led2: led_2 <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    gpios <span style="color:#f92672">=</span> &lt;&amp;gpio0 <span style="color:#ae81ff">30</span> GPIO_ACTIVE_LOW&gt;;
+</span></span><span style="display:flex;"><span>    label <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Green LED 2&#34;</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">}</span>;
+</span></span><span style="display:flex;"><span>  led3: led_2 <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    gpios <span style="color:#f92672">=</span> &lt;&amp;gpio0 <span style="color:#ae81ff">31</span> GPIO_ACTIVE_LOW&gt;;
+</span></span><span style="display:flex;"><span>    label <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Green LED 3&#34;</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">}</span>;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>;
+</span></span></code></pre></div><p>Let us explore the standard properties we see here in this example.</p>
+<h2 id="compatible">Compatible</h2>
+<p>First, the <code>compatible</code> property  is an important property every nodes except the root must have. This property helps the build system determine the node’s bindings and validate it.</p>
+<p>Being valid in this context means that the node has a correct syntax, correct required properties, and correct types of values for those properties. In other words, this property basically represents the name of a hardware device, such as <code>gpio-leds</code> in this case.</p>
+<p>Then, if the node is valid, the build system generates macros for the properties of the nodes, which can then be called by the device drivers and application codes. Here, the <code>gpio-leds</code> compatible lets you define a group of led nodes where each child node has <code>gpios</code> (<em>required</em> property - a must have, cannot be omitted) and <code>label</code> (optional) properties.</p>
+<blockquote>
+<p><code>compatible</code> is a string-array type property and typically follows the <code>“vendor, device”</code> format, for example, <code>compatible=”nordic,nrf-gpio-forwarder”</code>. However, for the nodes like <code>leds</code> node in the above DTS, the vendor part is usually omitted if the node characteristics is vendor-independent. Additionally, sometimes the node only include a single element like, <code>gpio-leds</code> and additional string element may be used as an alias if the build system cannot determine the bindings from the first element.</p>
+</blockquote>
+<h2 id="node-labels">Node labels</h2>
+<p>We have not yet introduced node <strong>labels</strong> in this article. Node labels are often used with device tree APIs such as <code>DT_NODELABEL</code> to get node <em>identifiers</em>. This allows developers to assign custom, human-readable names to pre-existing nodes, which is one of the easy and good approaches to get the node ids. For example, to get the node ID of <code>led_0</code> in the above DTS, we use <code>DT_NODELABEL(led0)</code> in the application.</p>
+<blockquote>
+<p>Note that node labels and <code>label</code> properties serves different purposes and are not the same. <code>label</code> properties are sometimes used for other purposes such as debugging, logging the node’s name and retrieving the node number/index on the parent device/node.
+{.alert .alert-primary}</p>
+</blockquote>
+<h2 id="gpios">gpios</h2>
+<p>The <code>gpios</code> property is a <strong>phandle-array</strong> type with two specifiers where the first specifier represents the GPIO <strong>pin number</strong> and the second the GPIO <strong>flags</strong>.</p>
+<blockquote>
+<p>Macros like <code>GPIO_ACTIVE_LOW</code> can be defined in a C header file and included from the device tree. For more information on GPIO-related macros, see <a href="https://github.com/zephyrproject-rtos/zephyr/blob/main/include/zephyr/dt-bindings/gpio/gpio.h">here</a>.</p>
+</blockquote>
+<p>Now that we are familiar with a few standard properties, from the above leds node we now understand that the DK board has 4 leds connected to pin 28, 29, 30, and 31 of the GPIO0 port. The next section will explore how we can interact with them.</p>
+<h1 id="development-environment-setup">Development Environment Setup</h1>
+<p>There are 3 ways to setup development environment for a Zephyr Project:</p>
+<ol>
+<li><em><strong>Use nrfConnect SDK tools if you frequently work with products from Nordic Semiconductor</strong></em>. They provide amazing GUI-based tools for installing all necessary toolchains to get started with the Zephyr project development as quick as possible. Additionally, there is a useful VS Code plugin for nRF Connect that simplifies development with features like device tree views, debugging, and device management.</li>
+<li><em><strong>Install the toolchains manually</strong></em>. You can refer to this Zephyr Project documentation but it is not recommended because based on your host platform, it may take quite a while to get started if something did not go well in the installation process. You may end up spending more time setting up the environment than doing actual development.</li>
+<li><em><strong>Use a containerized development environment</strong></em>. We will use Docker for this approach, as it is the quickest way possible. With containers, what works on one machine should work on another regardless of their OS.</li>
+</ol>
+<blockquote>
+<p>You can still follow along with the article even if you are not familiar with Docker. Please refer to this <a href="https://www.docker.com/101-tutorial/">link</a> to learn about Docker.</p>
+</blockquote>
+<p>You can use the Docker image from this <a href="https://github.com/aungkhantmaw64/mxc-zephyrproject/tree/master">repository</a> and follow the instructions in README.md to build the Zephyr Project Docker image and run the containerized build environment.</p>
+<p>Your Zephyr workspace should look like this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>zephyr_workspace
+</span></span><span style="display:flex;"><span>├── apps/
+</span></span><span style="display:flex;"><span>├── Dockerfile
+</span></span><span style="display:flex;"><span>├── entrypoint.sh
+</span></span><span style="display:flex;"><span>└── Makefile
+</span></span></code></pre></div><p>We will create a minimal Zephyr application, the “blinky” project inside the <code>apps</code> folder and the project should include:</p>
+<ul>
+<li><code>main.c</code>, for the firmware.</li>
+<li><code>prj.conf</code>, for Kconfig.</li>
+<li><code>CMakeLists.txt</code>, for the build.
+Now, the project structure should look like this:</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>├── apps
+</span></span><span style="display:flex;"><span>│   └── blinky
+</span></span><span style="display:flex;"><span>│       ├── CMakeLists.txt
+</span></span><span style="display:flex;"><span>│       ├── prj.conf
+</span></span><span style="display:flex;"><span>│       └── src
+</span></span><span style="display:flex;"><span>│           └── main.c
+</span></span><span style="display:flex;"><span>├── Dockerfile
+</span></span><span style="display:flex;"><span>├── entrypoint.sh
+</span></span><span style="display:flex;"><span>└── Makefile
+</span></span></code></pre></div><p>Create the <code>CMakeLists.txt</code> with the following contents:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>cmake_minimum_required<span style="color:#f92672">(</span>VERSION 3.20.0<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>find_package<span style="color:#f92672">(</span>Zephyr REQUIRED HINTS $ENV<span style="color:#f92672">{</span>ZEPHYR_BASE<span style="color:#f92672">})</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>project<span style="color:#f92672">(</span>blinky<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>target_sources<span style="color:#f92672">(</span>app PRIVATE src/main.c<span style="color:#f92672">)</span>
+</span></span></code></pre></div><p>The <code>prj.conf</code> is typically empty in a starter project but we will populate this file as the development progresses.
+But, let us leave it for now.</p>
+<p>Right, to verify that the build environment is set up correctly, we can write a simple “Hello World” program that prints “Hello World” to the UART0  peripheral and sends it to the PC via the USB cable. Populate the <code>main.c</code> file with the following contents.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;zephyr/devicetree.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;zephyr/kernel.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">printf</span>(<span style="color:#e6db74">&#34;Hello world&#34;</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>If you have cloned the repository provided earlier, navigate to the workspace directory within the cloned repository and run the following command to build the docker image.</p>
+<blockquote>
+<p>Ensure that the <code>make</code> program is installed in your host system for the following commands to work.</p>
+</blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>make build-docker-image
+</span></span></code></pre></div><p>Then, run the following to start the container.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>make run-docker-container
+</span></span></code></pre></div><p>This command will start a Debian-based Zephyr Project container and mount the workspace volume into <em>/opt/zephyrproject/zephyr/workshop</em>. Then, you can start using the built-in command line tool called <code>west</code> to build the firmware we just wrote.</p>
+<h1 id="development-workflow">Development Workflow</h1>
+<p><strong>West</strong> is a meta-tool provided by Zephyr that allows you to build, flash, debug Zephyr application, sign binaries and do many other interesting tasks. West deserves a separate article for a deeper exploration but here, we will only introduce a few use cases of west that are relevant to this article.</p>
+<p>As a first step, we can find out which boards are supported by Zephyr without going to the documentation page by running:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>west boards
+</span></span></code></pre></div><p>Results:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>root@3d1a07d63aab:/opt/zephyrproject/zephyr/workshop# west boards
+</span></span><span style="display:flex;"><span>weact_stm32f405_core
+</span></span><span style="display:flex;"><span>blackpill_f401ce
+</span></span><span style="display:flex;"><span>mini_stm32h743
+</span></span><span style="display:flex;"><span>blackpill_f411ce
+</span></span><span style="display:flex;"><span>blackpill_f401cc
+</span></span><span style="display:flex;"><span>weact_stm32g431_core
+</span></span><span style="display:flex;"><span>b_u585i_iot02a
+</span></span><span style="display:flex;"><span>stm32g071b_disco
+</span></span><span style="display:flex;"><span>nucleo_l4r5zi
+</span></span><span style="display:flex;"><span>nucleo_u5a5zj_q
+</span></span><span style="display:flex;"><span>steval_fcu001v1
+</span></span><span style="display:flex;"><span>nucleo_f030r8
+</span></span><span style="display:flex;"><span>stm32h750b_dk
+</span></span><span style="display:flex;"><span>..
+</span></span><span style="display:flex;"><span>..
+</span></span></code></pre></div><p>The results show a long list of supported boards. To narrow down the list, we can use filters with the <code>-n</code> option. We will use the option with <code>nrf</code> keyword to check if our NRF5340DK board is included in the list:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>west boards -n nrf
+</span></span></code></pre></div><p>Results:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>root@3d1a07d63aab:/opt/zephyrproject/zephyr/workshop# west boards -n nrf
+</span></span><span style="display:flex;"><span>nrf52_vbluno52
+</span></span><span style="display:flex;"><span>nrf51_vbluno51
+</span></span><span style="display:flex;"><span>nrf52_sparkfun
+</span></span><span style="display:flex;"><span>nrf52840_papyr
+</span></span><span style="display:flex;"><span>nrf52840_blip
+</span></span><span style="display:flex;"><span>nrf52832_mdk
+</span></span><span style="display:flex;"><span>nrf52840_mdk_usb_dongle
+</span></span><span style="display:flex;"><span>nrf52840_mdk
+</span></span><span style="display:flex;"><span>nrf52_adafruit_feather
+</span></span><span style="display:flex;"><span>adafruit_feather_nrf52840_express
+</span></span><span style="display:flex;"><span>adafruit_feather_nrf52840_sense
+</span></span><span style="display:flex;"><span>nrf9151dk
+</span></span><span style="display:flex;"><span>nrf52840dongle
+</span></span><span style="display:flex;"><span>nrf9131ek
+</span></span><span style="display:flex;"><span>nrf54l15pdk
+</span></span><span style="display:flex;"><span>nrf52833dk
+</span></span><span style="display:flex;"><span>nrf52840dk
+</span></span><span style="display:flex;"><span>nrf5340dk
+</span></span><span style="display:flex;"><span>..
+</span></span></code></pre></div><p>Great! The list shows all the boards with names containing the keyword, &ldquo;nrf&rdquo;, including our board, nrf5340dk. You can also use the <code>-f</code> option to print more detailed information about the boards with your preferred format:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>west boards -f <span style="color:#e6db74">&#34;{name} =&gt; {qualifiers}&#34;</span> -n nrf
+</span></span></code></pre></div><p>Results:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>root@3d1a07d63aab:/opt/zephyrproject/zephyr/workshop# west boards -f <span style="color:#e6db74">&#34;{name} =&gt; {qualifiers}&#34;</span> -n nrf
+</span></span><span style="display:flex;"><span>nrf52_vbluno52 <span style="color:#f92672">=</span>&gt; nrf52832
+</span></span><span style="display:flex;"><span>nrf51_vbluno51 <span style="color:#f92672">=</span>&gt; nrf51822
+</span></span><span style="display:flex;"><span>nrf52_sparkfun <span style="color:#f92672">=</span>&gt; nrf52832
+</span></span><span style="display:flex;"><span>nrf52840_papyr <span style="color:#f92672">=</span>&gt; nrf52840
+</span></span><span style="display:flex;"><span>nrf52840_blip <span style="color:#f92672">=</span>&gt; nrf52840
+</span></span><span style="display:flex;"><span>nrf52832_mdk <span style="color:#f92672">=</span>&gt; nrf52832
+</span></span><span style="display:flex;"><span>nrf52840_mdk_usb_dongle <span style="color:#f92672">=</span>&gt; nrf52840
+</span></span><span style="display:flex;"><span>nrf52840_mdk <span style="color:#f92672">=</span>&gt; nrf52840
+</span></span><span style="display:flex;"><span>nrf52_adafruit_feather <span style="color:#f92672">=</span>&gt; nrf52832
+</span></span><span style="display:flex;"><span>adafruit_feather_nrf52840_express <span style="color:#f92672">=</span>&gt; nrf52840
+</span></span><span style="display:flex;"><span>adafruit_feather_nrf52840_sense <span style="color:#f92672">=</span>&gt; nrf52840
+</span></span><span style="display:flex;"><span>nrf9151dk <span style="color:#f92672">=</span>&gt; nrf9151,nrf9151/ns
+</span></span><span style="display:flex;"><span>nrf52840dongle <span style="color:#f92672">=</span>&gt; nrf52840
+</span></span><span style="display:flex;"><span>nrf9131ek <span style="color:#f92672">=</span>&gt; nrf9131,nrf9131/ns
+</span></span><span style="display:flex;"><span>nrf54l15pdk <span style="color:#f92672">=</span>&gt; nrf54l15/cpuapp,nrf54l15/cpuflpr,nrf54l15/cpuflpr/xip
+</span></span><span style="display:flex;"><span>nrf52833dk <span style="color:#f92672">=</span>&gt; nrf52820,nrf52833
+</span></span><span style="display:flex;"><span>nrf52840dk <span style="color:#f92672">=</span>&gt; nrf52840,nrf52811
+</span></span><span style="display:flex;"><span>...
+</span></span></code></pre></div><p>Now that you know your board’s name, you can now use <code>west</code> to print out information specifically for your board by specifying its name with the <code>—board</code> option:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>west boards -f <span style="color:#e6db74">&#34;{name} =&gt; {qualifiers}&#34;</span> --board nrf5340dk
+</span></span></code></pre></div><p>Results:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>root@3d1a07d63aab:/opt/zephyrproject/zephyr/workshop# west boards -f <span style="color:#e6db74">&#34;{name} =&gt; {qualifiers}&#34;</span> --board nrf5340dk
+</span></span><span style="display:flex;"><span>nrf5340dk <span style="color:#f92672">=</span>&gt; nrf5340/cpuapp,nrf5340/cpuapp/ns,nrf5340/cpunet
+</span></span></code></pre></div><p>The <code>qualifiers</code> is a useful parameter needed during the build process to specify details about your build target. For example, if you&rsquo;re building a non-secure version of your application firmware, you would use <code>nrf5340/cpuapp/ns</code>. If you&rsquo;re targeting the network core of the NRF5340 SoC, you would use <code>nrf5340/cpunet</code>.</p>
+<p>Now, let us build the firmware with the following west build command and since we do not want to consider the security features yet, we will just use the qualifier for the simple application target, nrf5340/cpuapp:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>west build -p always -b nrf5340dk/nrf5340/cpuapp apps/blinky
+</span></span></code></pre></div><p>Results:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>root@6d014c305b28:/opt/zephyrproject/zephyr/workshop# west build -p always -b nrf5340dk/nrf5340/cpuapp apps/blinky  
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>-- west build: making build dir /opt/zephyrproject/zephyr/workshop/build pristine
+</span></span><span style="display:flex;"><span>-- west build: generating a build system
+</span></span><span style="display:flex;"><span>Loading Zephyr default modules <span style="color:#f92672">(</span>Zephyr base<span style="color:#f92672">)</span>.
+</span></span><span style="display:flex;"><span>-- Application: /opt/zephyrproject/zephyr/workshop/apps/blinky
+</span></span><span style="display:flex;"><span>-- CMake version: 3.25.1
+</span></span><span style="display:flex;"><span>-- Found Python3: /opt/zephyrproject/.venv/bin/python3 <span style="color:#f92672">(</span>found suitable version <span style="color:#e6db74">&#34;3.11.2&#34;</span>, minimum required is <span style="color:#e6db74">&#34;3.8&#34;</span><span style="color:#f92672">)</span> found components: Interpreter 
+</span></span><span style="display:flex;"><span>-- Cache files will be written to: /root/.cache/zephyr
+</span></span><span style="display:flex;"><span>-- Zephyr version: 3.7.99 <span style="color:#f92672">(</span>/opt/zephyrproject/zephyr<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>-- Found west <span style="color:#f92672">(</span>found suitable version <span style="color:#e6db74">&#34;1.2.0&#34;</span>, minimum required is <span style="color:#e6db74">&#34;0.14.0&#34;</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>-- Board: nrf5340dk, qualifiers: nrf5340/cpuapp
+</span></span><span style="display:flex;"><span>-- ZEPHYR_TOOLCHAIN_VARIANT not set, trying to locate Zephyr SDK
+</span></span><span style="display:flex;"><span>-- Found host-tools: zephyr 0.16.5 <span style="color:#f92672">(</span>/zephyr-sdk-0.16.5<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>-- Found toolchain: zephyr 0.16.5 <span style="color:#f92672">(</span>/zephyr-sdk-0.16.5<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>-- Found Dtc: /zephyr-sdk-0.16.5/sysroots/x86_64-pokysdk-linux/usr/bin/dtc <span style="color:#f92672">(</span>found suitable version <span style="color:#e6db74">&#34;1.6.0&#34;</span>, minimum required is <span style="color:#e6db74">&#34;1.4.6&#34;</span><span style="color:#f92672">)</span> 
+</span></span><span style="display:flex;"><span>-- Found BOARD.dts: /opt/zephyrproject/zephyr/boards/nordic/nrf5340dk/nrf5340dk_nrf5340_cpuapp.dts
+</span></span><span style="display:flex;"><span>-- Generated zephyr.dts: /opt/zephyrproject/zephyr/workshop/build/zephyr/zephyr.dts
+</span></span><span style="display:flex;"><span>-- Generated devicetree_generated.h: /opt/zephyrproject/zephyr/workshop/build/zephyr/include/generated/zephyr/devicetree_generated.h
+</span></span><span style="display:flex;"><span>-- Including generated dts.cmake file: /opt/zephyrproject/zephyr/workshop/build/zephyr/dts.cmake
+</span></span><span style="display:flex;"><span>Parsing /opt/zephyrproject/zephyr/Kconfig
+</span></span><span style="display:flex;"><span>Loaded configuration <span style="color:#e6db74">&#39;/opt/zephyrproject/zephyr/boards/nordic/nrf5340dk/nrf5340dk_nrf5340_cpuapp_defconfig&#39;</span>
+</span></span><span style="display:flex;"><span>Merged configuration <span style="color:#e6db74">&#39;/opt/zephyrproject/zephyr/workshop/apps/blinky/prj.conf&#39;</span>
+</span></span><span style="display:flex;"><span>Configuration saved to <span style="color:#e6db74">&#39;/opt/zephyrproject/zephyr/workshop/build/zephyr/.config&#39;</span>
+</span></span><span style="display:flex;"><span>Kconfig header saved to <span style="color:#e6db74">&#39;/opt/zephyrproject/zephyr/workshop/build/zephyr/include/generated/zephyr/autoconf.h&#39;</span>
+</span></span><span style="display:flex;"><span>-- Found GnuLd: /zephyr-sdk-0.16.5/arm-zephyr-eabi/arm-zephyr-eabi/bin/ld.bfd <span style="color:#f92672">(</span>found version <span style="color:#e6db74">&#34;2.38&#34;</span><span style="color:#f92672">)</span> 
+</span></span><span style="display:flex;"><span>-- The C compiler identification is GNU 12.2.0
+</span></span><span style="display:flex;"><span>-- The CXX compiler identification is GNU 12.2.0
+</span></span><span style="display:flex;"><span>-- The ASM compiler identification is GNU
+</span></span><span style="display:flex;"><span>-- Found assembler: /zephyr-sdk-0.16.5/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc
+</span></span><span style="display:flex;"><span>-- Using ccache: /usr/bin/ccache
+</span></span><span style="display:flex;"><span>-- Configuring <span style="color:#66d9ef">done</span>
+</span></span><span style="display:flex;"><span>-- Generating <span style="color:#66d9ef">done</span>
+</span></span><span style="display:flex;"><span>-- Build files have been written to: /opt/zephyrproject/zephyr/workshop/build
+</span></span><span style="display:flex;"><span>-- west build: building application
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>1/135<span style="color:#f92672">]</span> Preparing syscall dependency handling
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>2/135<span style="color:#f92672">]</span> Generating include/generated/zephyr/version.h
+</span></span><span style="display:flex;"><span>-- Zephyr version: 3.7.99 <span style="color:#f92672">(</span>/opt/zephyrproject/zephyr<span style="color:#f92672">)</span>, build: v3.7.0-1625-gf29377a12cb5
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>135/135<span style="color:#f92672">]</span> Linking C executable zephyr/zephyr.elf
+</span></span><span style="display:flex;"><span>Memory region         Used Size  Region Size  %age Used
+</span></span><span style="display:flex;"><span>           FLASH:       <span style="color:#ae81ff">19884</span> B         <span style="color:#ae81ff">1</span> MB      1.90%
+</span></span><span style="display:flex;"><span>             RAM:        <span style="color:#ae81ff">4416</span> B       <span style="color:#ae81ff">448</span> KB      0.96%
+</span></span><span style="display:flex;"><span>        IDT_LIST:          <span style="color:#ae81ff">0</span> GB        <span style="color:#ae81ff">32</span> KB      0.00%
+</span></span><span style="display:flex;"><span>Generating files from /opt/zephyrproject/zephyr/workshop/build/zephyr/zephyr.elf <span style="color:#66d9ef">for</span> board: nrf5340dk
+</span></span></code></pre></div><p>The <code>-p</code> option stands for pristine, with three choices available: <code>always</code>, <code>never</code>, and <code>auto</code>. In the example above, always means that each time the command is run, the existing build directory will be cleaned, and the application will be rebuilt from scratch. The auto choice allows the build system to decide whether everything or just part of the application needs to be rebuilt.</p>
+<p>While the always pristine build ensures a clean build, it can be significantly slower than auto for large codebases. So, choose this option wisely to control the build process.</p>
+<p>Now connect your board to the PC and flash the firmware with:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>west flash
+</span></span></code></pre></div><p>Results:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>root@811c26a4fc90:/opt/zephyrproject/zephyr/workshop# west flash
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>-- west flash: rebuilding
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>0/16<span style="color:#f92672">]</span> Performing build step <span style="color:#66d9ef">for</span> <span style="color:#e6db74">&#39;tfm&#39;</span>
+</span></span><span style="display:flex;"><span>ninja: no work to <span style="color:#66d9ef">do</span>.
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>2/13<span style="color:#f92672">]</span> Performing install step <span style="color:#66d9ef">for</span> <span style="color:#e6db74">&#39;tfm&#39;</span>
+</span></span><span style="display:flex;"><span>-- Install configuration: <span style="color:#e6db74">&#34;MinSizeRel&#34;</span>
+</span></span><span style="display:flex;"><span>----- Installing platform NS -----
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>13/13<span style="color:#f92672">]</span> Linking C executable zephyr/zephyr.elf
+</span></span><span style="display:flex;"><span>Memory region         Used Size  Region Size  %age Used
+</span></span><span style="display:flex;"><span>           FLASH:       <span style="color:#ae81ff">20784</span> B       <span style="color:#ae81ff">192</span> KB     10.57%
+</span></span><span style="display:flex;"><span>             RAM:        <span style="color:#ae81ff">4544</span> B       <span style="color:#ae81ff">192</span> KB      2.31%
+</span></span><span style="display:flex;"><span>        IDT_LIST:          <span style="color:#ae81ff">0</span> GB        <span style="color:#ae81ff">32</span> KB      0.00%
+</span></span><span style="display:flex;"><span>Generating files from /opt/zephyrproject/zephyr/workshop/build/zephyr/zephyr.elf <span style="color:#66d9ef">for</span> board: nrf5340dk
+</span></span><span style="display:flex;"><span>image.py: sign the payload
+</span></span><span style="display:flex;"><span>image.py: sign the payload
+</span></span><span style="display:flex;"><span>-- west flash: using runner nrfjprog
+</span></span><span style="display:flex;"><span>-- runners.nrfjprog: reset after flashing requested
+</span></span></code></pre></div><p>You can use serial monitor software like <code>minicom</code> to see the console output from the DK board UART. Specify the port with the <code>-D</code> option, in this case <code>/dev/ttyACM1</code>. This can be different on your host platform:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>minicom -D /dev/ttyACM1
+</span></span></code></pre></div><p>Results:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>Welcome to minicom 2.8
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>OPTIONS: I18n 
+</span></span><span style="display:flex;"><span>Port /dev/ttyACM1, 11:12:14
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Press CTRL-A Z <span style="color:#66d9ef">for</span> help on special keys
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>*** Booting Zephyr OS build v3.7.0-1625-gf29377a12cb5 ***
+</span></span><span style="display:flex;"><span>Hello world
+</span></span></code></pre></div><blockquote>
+<p>If you do not see the log, try pushing the reset button as it might have already been printed out and the console did not catch it.</p>
+</blockquote>
+<h1 id="a-brief-introduction-to-device-tree-apis">A Brief Introduction To Device Tree APIs</h1>
+<p>We will use the following APIs to interact with GPIO devices:</p>
+<ul>
+<li><code>gpio_is_ready_dt</code> - to validate if the GPIO port connected to the LEDs is ready.</li>
+<li><code>gpio_pin_configure_dt</code> - to configure the LED pins as GPIO output that are turned off at initialization stage.</li>
+<li><code>gpio_pin_interrupt_configure_dt</code> - to configure the push buttons as interrupt driven GPIO inputs.</li>
+<li><code>gpio_pin_set_dt</code> - to turn on and off the LEDS.</li>
+</ul>
+<p>We should also be familiar with the following data structures:</p>
+<ul>
+<li><code>struct device</code> - a structure representing an instance of peripheral device. (gpio, i2c, spi, etc.)</li>
+<li><code>struct gpio_dt_spec</code> - a structure containing data fields such as port, pin, and dt_flag.</li>
+</ul>
+<p>The above structs must be created but should not be populated manually. Their values will be filled out by the Device Tree APIs such as <code>DEVICE_DT_GET</code> for <code>struct device</code> and <code>GPIO_DT_SPEC_GET</code> for <code>struct gpio_dt_spec</code>.</p>
+<p>Now, we are ready to write our first blinky application.</p>
+<p>Let us enable GPIO APIs by setting CONFIG_GPIO=y in the prj.conf file:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>CONFIG_GPIO<span style="color:#f92672">=</span>y
+</span></span></code></pre></div><p>And include the following header files at the top of the main.c file:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;zephyr/devicetree.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;zephyr/drivers/gpio.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;zephyr/kernel.h&gt;</span><span style="color:#75715e">
+</span></span></span></code></pre></div><ul>
+<li>
+<p><code>&lt;zephyr/devicetree.h&gt;</code> for device tree APIs</p>
+</li>
+<li>
+<p><code>&lt;zephyr/drivers/gpio.h&gt;</code> for GPIO driver APIs</p>
+</li>
+<li>
+<p><code>&lt;zephyr/kernel.h&gt;</code> for kernel services like <code>k_msleep</code> for delaying some intervals between on/off states of the LEDs.</p>
+</li>
+</ul>
+<p>We will obtain device tree specifications for each on-board LED using <code>GPIO_DT_SPEC_GET</code>. This macro populates an instance of <code>struct gpio_dt_spec</code> with properties defined in the device tree sources with the <code>gpio-leds</code> compatible. It takes two arguments: <em>node_id</em> and <em>property</em>.</p>
+<p>You can obtain the node_id  of a device tree node using several APIs such as <code>DT_ALIAS</code>, <code>DT_CHOSEN</code>, <code>DT_NODELABEL</code>, etc. We will use <code>DT_NODELABEL</code> as it is more convenient to use the node labels (led0, led1, led2, and led3) in this example as they are already defined by the board-level source tree. If you are interested in other API, see this <a href="https://docs.zephyrproject.org/latest/build/dts/api/api.html">link</a>.</p>
+<p>Here is one way to create instances representing the 4 LED pins in the global scope:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> gpio_dt_spec led0 <span style="color:#f92672">=</span> <span style="color:#a6e22e">GPIO_DT_SPEC_GET</span>(<span style="color:#a6e22e">DT_NODELABEL</span>(led0), gpios);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> gpio_dt_spec led1 <span style="color:#f92672">=</span> <span style="color:#a6e22e">GPIO_DT_SPEC_GET</span>(<span style="color:#a6e22e">DT_NODELABEL</span>(led1), gpios);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> gpio_dt_spec led2 <span style="color:#f92672">=</span> <span style="color:#a6e22e">GPIO_DT_SPEC_GET</span>(<span style="color:#a6e22e">DT_NODELABEL</span>(led2), gpios);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> gpio_dt_spec led3 <span style="color:#f92672">=</span> <span style="color:#a6e22e">GPIO_DT_SPEC_GET</span>(<span style="color:#a6e22e">DT_NODELABEL</span>(led3), gpios);
+</span></span></code></pre></div><p>The <code>GPIO_DT_SPEC_GET</code> macro uses the node id returned by <code>DT_NODELABEL</code> and use the <code>gpios</code> property to get the specifications of a GPIO pin. Although, the above code works, it contains some duplication and can be improved as follows:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">enum</span> { LED0, LED1, LED2, LED3 };
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> gpio_dt_spec led_dt_specs[<span style="color:#ae81ff">4</span>] <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>    [LED0] <span style="color:#f92672">=</span> <span style="color:#a6e22e">GPIO_DT_SPEC_GET</span>(<span style="color:#a6e22e">DT_NODELABEL</span>(led0), gpios),
+</span></span><span style="display:flex;"><span>    [LED1] <span style="color:#f92672">=</span> <span style="color:#a6e22e">GPIO_DT_SPEC_GET</span>(<span style="color:#a6e22e">DT_NODELABEL</span>(led1), gpios),
+</span></span><span style="display:flex;"><span>    [LED2] <span style="color:#f92672">=</span> <span style="color:#a6e22e">GPIO_DT_SPEC_GET</span>(<span style="color:#a6e22e">DT_NODELABEL</span>(led2), gpios),
+</span></span><span style="display:flex;"><span>    [LED3] <span style="color:#f92672">=</span> <span style="color:#a6e22e">GPIO_DT_SPEC_GET</span>(<span style="color:#a6e22e">DT_NODELABEL</span>(led3), gpios)};
+</span></span></code></pre></div><p>The improve code packs all the device tree specs into a single array, which reduces code duplication and allows the repeated operations to be performed in a loop. Let us initialize the LEDs as GPIO pins as follows:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">size_t</span> i <span style="color:#f92672">=</span> {<span style="color:#ae81ff">0</span>}; i <span style="color:#f92672">&lt;</span> <span style="color:#a6e22e">ARRAY_SIZE</span>(led_dt_specs); i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">gpio_is_ready_dt</span>(<span style="color:#f92672">&amp;</span>led_dt_specs[i])) {
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">printf</span>(<span style="color:#e6db74">&#34;%s: pin %d is not ready.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, led_dt_specs[i].port<span style="color:#f92672">-&gt;</span>name,
+</span></span><span style="display:flex;"><span>             led_dt_specs[i].pin);
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span>EBUSY;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">printf</span>(<span style="color:#e6db74">&#34;%s: pin %d is ready.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, led_dt_specs[i].port<span style="color:#f92672">-&gt;</span>name,
+</span></span><span style="display:flex;"><span>           led_dt_specs[i].pin);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> ret <span style="color:#f92672">=</span> <span style="color:#a6e22e">gpio_pin_configure_dt</span>(<span style="color:#f92672">&amp;</span>led_dt_specs[i], GPIO_OUTPUT_INACTIVE);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (ret <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">printf</span>(<span style="color:#e6db74">&#34;Failed to initialize %s: pin %d. Error code: %d&#34;</span>,
+</span></span><span style="display:flex;"><span>             led_dt_specs[i].port<span style="color:#f92672">-&gt;</span>name, led_dt_specs[i].pin, ret);
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">return</span> ret;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">printf</span>(<span style="color:#e6db74">&#34;%s: pin %d is successfully initialized.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>,
+</span></span><span style="display:flex;"><span>           led_dt_specs[i].port<span style="color:#f92672">-&gt;</span>name, led_dt_specs[i].pin);
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>First, we iterate through the <code>led_dt_specs</code> to do the same initialization steps for all the LED pins. <code>ARRAY_SIZE</code> macro returns the number of elements in the given array.</p>
+<p>Before any initialization, the GPIO devices are checked if they are ready first with the <code>gpio_is_ready_dt</code> and then configured as a GPIO output pin with intial LOW state by calling the <code>gpio_pin_configure_dt</code> function with the <code>GPIO_OUTPUT_INACTIVE</code> flag.</p>
+<p>Zephyr uses POSIX compliant error codes where functions return non-zero integer values to indicate an issue in a operation. So, we check this error code in the above example and let the code break out of the main function if any device initialization did not succeed.</p>
+<p>Now we will make the LEDs blink one after another with 500 milliseconds intervals between on/off states within an infinite loop. k_msleep is an RTOS service that makes the current task (caller) enter sleep mode for a given time period in terms of milliseconds. gpio_pin_set_dt can be used to set the state of the given GPIO spec. It also returns an error code, which is omitted here for the sake of simplicity.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">while</span> (<span style="color:#ae81ff">1</span>) {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">int</span> led_state <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">size_t</span> i <span style="color:#f92672">=</span> {<span style="color:#ae81ff">0</span>}; i <span style="color:#f92672">&lt;</span> <span style="color:#a6e22e">ARRAY_SIZE</span>(led_dt_specs); i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">gpio_pin_set_dt</span>(<span style="color:#f92672">&amp;</span>led_dt_specs[i], led_state);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">k_msleep</span>(<span style="color:#ae81ff">500</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">gpio_pin_set_dt</span>(<span style="color:#f92672">&amp;</span>led_dt_specs[i], <span style="color:#f92672">!</span>led_state);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">k_msleep</span>(<span style="color:#ae81ff">500</span>);
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Here is the complete code for the blinky application.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;zephyr/devicetree.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;zephyr/drivers/gpio.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;zephyr/kernel.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">enum</span> { LED0, LED1, LED2, LED3 };
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> gpio_dt_spec led_dt_specs[<span style="color:#ae81ff">4</span>] <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>    [LED0] <span style="color:#f92672">=</span> <span style="color:#a6e22e">GPIO_DT_SPEC_GET</span>(<span style="color:#a6e22e">DT_NODELABEL</span>(led0), gpios),
+</span></span><span style="display:flex;"><span>    [LED1] <span style="color:#f92672">=</span> <span style="color:#a6e22e">GPIO_DT_SPEC_GET</span>(<span style="color:#a6e22e">DT_NODELABEL</span>(led1), gpios),
+</span></span><span style="display:flex;"><span>    [LED2] <span style="color:#f92672">=</span> <span style="color:#a6e22e">GPIO_DT_SPEC_GET</span>(<span style="color:#a6e22e">DT_NODELABEL</span>(led2), gpios),
+</span></span><span style="display:flex;"><span>    [LED3] <span style="color:#f92672">=</span> <span style="color:#a6e22e">GPIO_DT_SPEC_GET</span>(<span style="color:#a6e22e">DT_NODELABEL</span>(led3), gpios)};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">size_t</span> i <span style="color:#f92672">=</span> {<span style="color:#ae81ff">0</span>}; i <span style="color:#f92672">&lt;</span> <span style="color:#a6e22e">ARRAY_SIZE</span>(led_dt_specs); i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">gpio_is_ready_dt</span>(<span style="color:#f92672">&amp;</span>led_dt_specs[i])) {
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">printf</span>(<span style="color:#e6db74">&#34;%s: pin %d is not ready.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, led_dt_specs[i].port<span style="color:#f92672">-&gt;</span>name,
+</span></span><span style="display:flex;"><span>             led_dt_specs[i].pin);
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span>EBUSY;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">printf</span>(<span style="color:#e6db74">&#34;%s: pin %d is ready.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, led_dt_specs[i].port<span style="color:#f92672">-&gt;</span>name,
+</span></span><span style="display:flex;"><span>           led_dt_specs[i].pin);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> ret <span style="color:#f92672">=</span> <span style="color:#a6e22e">gpio_pin_configure_dt</span>(<span style="color:#f92672">&amp;</span>led_dt_specs[i], GPIO_OUTPUT);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (ret <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">printf</span>(<span style="color:#e6db74">&#34;Failed to initialize %s: pin %d. Error code: %d&#34;</span>,
+</span></span><span style="display:flex;"><span>             led_dt_specs[i].port<span style="color:#f92672">-&gt;</span>name, led_dt_specs[i].pin, ret);
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">return</span> ret;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">printf</span>(<span style="color:#e6db74">&#34;%s: pin %d is successfully initialized.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>,
+</span></span><span style="display:flex;"><span>           led_dt_specs[i].port<span style="color:#f92672">-&gt;</span>name, led_dt_specs[i].pin);
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">while</span> (<span style="color:#ae81ff">1</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">int</span> led_state <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">size_t</span> i <span style="color:#f92672">=</span> {<span style="color:#ae81ff">0</span>}; i <span style="color:#f92672">&lt;</span> <span style="color:#a6e22e">ARRAY_SIZE</span>(led_dt_specs); i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">gpio_pin_set_dt</span>(<span style="color:#f92672">&amp;</span>led_dt_specs[i], led_state);
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">k_msleep</span>(<span style="color:#ae81ff">500</span>);
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">gpio_pin_set_dt</span>(<span style="color:#f92672">&amp;</span>led_dt_specs[i], <span style="color:#f92672">!</span>led_state);
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">k_msleep</span>(<span style="color:#ae81ff">500</span>);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Now if we build and flash the program as described earlier, you will see the console log output as follows:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>Welcome to minicom 2.8
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>OPTIONS: I18n 
+</span></span><span style="display:flex;"><span>Port /dev/ttyACM1, 14:19:21
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Press CTRL-A Z <span style="color:#66d9ef">for</span> help on special keys
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>*** Booting Zephyr OS build v3.7.0-1625-gf29377a12cb5 ***
+</span></span><span style="display:flex;"><span>gpio@842500: pin <span style="color:#ae81ff">28</span> is ready.
+</span></span><span style="display:flex;"><span>gpio@842500: pin <span style="color:#ae81ff">28</span> is successfully initialized.
+</span></span><span style="display:flex;"><span>gpio@842500: pin <span style="color:#ae81ff">29</span> is ready.
+</span></span><span style="display:flex;"><span>gpio@842500: pin <span style="color:#ae81ff">29</span> is successfully initialized.
+</span></span><span style="display:flex;"><span>gpio@842500: pin <span style="color:#ae81ff">30</span> is ready.
+</span></span><span style="display:flex;"><span>gpio@842500: pin <span style="color:#ae81ff">30</span> is successfully initialized.
+</span></span><span style="display:flex;"><span>gpio@842500: pin <span style="color:#ae81ff">31</span> is ready.
+</span></span><span style="display:flex;"><span>gpio@842500: pin <span style="color:#ae81ff">31</span> is successfully initialized.
+</span></span></code></pre></div><p>Also, you can see the blinking LEDs as shown in the following video. Now let us add button inputs for our Zephyr application. In the <code>nrf5340dk_common.dtsi</code>,the buttons are defined as:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span>buttons {
+</span></span><span style="display:flex;"><span>    compatible <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;gpio-keys&#34;</span>;
+</span></span><span style="display:flex;"><span>    button0: button_0 {
+</span></span><span style="display:flex;"><span>            gpios <span style="color:#f92672">=</span> <span style="color:#f92672">&lt;&amp;</span>gpio0 <span style="color:#ae81ff">23</span> (GPIO_PULL_UP <span style="color:#f92672">|</span> GPIO_ACTIVE_LOW)<span style="color:#f92672">&gt;</span>;
+</span></span><span style="display:flex;"><span>            label <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Push button 1&#34;</span>;
+</span></span><span style="display:flex;"><span>            zephyr,code <span style="color:#f92672">=</span> <span style="color:#f92672">&lt;</span>INPUT_KEY_0<span style="color:#f92672">&gt;</span>;
+</span></span><span style="display:flex;"><span>    };
+</span></span><span style="display:flex;"><span>    button1: button_1 {
+</span></span><span style="display:flex;"><span>            gpios <span style="color:#f92672">=</span> <span style="color:#f92672">&lt;&amp;</span>gpio0 <span style="color:#ae81ff">24</span> (GPIO_PULL_UP <span style="color:#f92672">|</span> GPIO_ACTIVE_LOW)<span style="color:#f92672">&gt;</span>;
+</span></span><span style="display:flex;"><span>            label <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Push button 2&#34;</span>;
+</span></span><span style="display:flex;"><span>            zephyr,code <span style="color:#f92672">=</span> <span style="color:#f92672">&lt;</span>INPUT_KEY_1<span style="color:#f92672">&gt;</span>;
+</span></span><span style="display:flex;"><span>    };
+</span></span><span style="display:flex;"><span>    button2: button_2 {
+</span></span><span style="display:flex;"><span>            gpios <span style="color:#f92672">=</span> <span style="color:#f92672">&lt;&amp;</span>gpio0 <span style="color:#ae81ff">8</span> (GPIO_PULL_UP <span style="color:#f92672">|</span> GPIO_ACTIVE_LOW)<span style="color:#f92672">&gt;</span>;
+</span></span><span style="display:flex;"><span>            label <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Push button 3&#34;</span>;
+</span></span><span style="display:flex;"><span>            zephyr,code <span style="color:#f92672">=</span> <span style="color:#f92672">&lt;</span>INPUT_KEY_2<span style="color:#f92672">&gt;</span>;
+</span></span><span style="display:flex;"><span>    };
+</span></span><span style="display:flex;"><span>    button3: button_3 {
+</span></span><span style="display:flex;"><span>            gpios <span style="color:#f92672">=</span> <span style="color:#f92672">&lt;&amp;</span>gpio0 <span style="color:#ae81ff">9</span> (GPIO_PULL_UP <span style="color:#f92672">|</span> GPIO_ACTIVE_LOW)<span style="color:#f92672">&gt;</span>;
+</span></span><span style="display:flex;"><span>            label <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Push button 4&#34;</span>;
+</span></span><span style="display:flex;"><span>            zephyr,code <span style="color:#f92672">=</span> <span style="color:#f92672">&lt;</span>INPUT_KEY_3<span style="color:#f92672">&gt;</span>;
+</span></span><span style="display:flex;"><span>    };
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><p><em><strong>Blink LED Demo</strong></em>
+
+
+    
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+      <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" loading="eager" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/wBlU19iyMaY?autoplay=0&controls=1&end=0&loop=0&mute=0&start=0" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" title="YouTube video"
+      ></iframe>
+    </div>
+</p>
+<p>Cool! Now, we will create another <code>struct gpio_dt_spec</code> array for the buttons:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> gpio_dt_spec led_dt_specs[<span style="color:#ae81ff">4</span>] <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>    [BUTTON0] <span style="color:#f92672">=</span> <span style="color:#a6e22e">GPIO_DT_SPEC_GET</span>(<span style="color:#a6e22e">DT_NODELABEL</span>(button0), gpios),
+</span></span><span style="display:flex;"><span>    [BUTTON1] <span style="color:#f92672">=</span> <span style="color:#a6e22e">GPIO_DT_SPEC_GET</span>(<span style="color:#a6e22e">DT_NODELABEL</span>(button1), gpios),
+</span></span><span style="display:flex;"><span>    [BUTTON2] <span style="color:#f92672">=</span> <span style="color:#a6e22e">GPIO_DT_SPEC_GET</span>(<span style="color:#a6e22e">DT_NODELABEL</span>(button2), gpios),
+</span></span><span style="display:flex;"><span>    [BUTTON3] <span style="color:#f92672">=</span> <span style="color:#a6e22e">GPIO_DT_SPEC_GET</span>(<span style="color:#a6e22e">DT_NODELABEL</span>(button3), gpios)};
+</span></span></code></pre></div><p>From the device tree, we can say that buttons are pulled up by default. So, we should configures these pins as interrupt driven pins which triggers on the pin state change to zero with <code>gpio_pin_interrupt_configure_dt</code> and the <code>GPIO_INT_EDGE_TO_INACTIVE</code> flag.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#75715e">// Initializes the Buttons
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">size_t</span> i <span style="color:#f92672">=</span> {<span style="color:#ae81ff">0</span>}; i <span style="color:#f92672">&lt;</span> <span style="color:#a6e22e">ARRAY_SIZE</span>(button_dt_specs); i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>   <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">gpio_is_ready_dt</span>(<span style="color:#f92672">&amp;</span>button_dt_specs[i])) {
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">printk</span>(<span style="color:#e6db74">&#34;%s: pin %d is not ready.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, 
+</span></span><span style="display:flex;"><span>             button_dt_specs[i].port<span style="color:#f92672">-&gt;</span>name,
+</span></span><span style="display:flex;"><span>             button_dt_specs[i].pin);
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span>EBUSY;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> ret <span style="color:#f92672">=</span> <span style="color:#a6e22e">gpio_pin_configure_dt</span>(<span style="color:#f92672">&amp;</span>button_dt_specs[i], 
+</span></span><span style="display:flex;"><span>                                   GPIO_INPUT);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (ret <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">printk</span>(<span style="color:#e6db74">&#34;Failed to initialize %s: pin %d as GPIO input. </span>
+</span></span><span style="display:flex;"><span>      Error code: <span style="color:#f92672">%</span>d<span style="color:#e6db74">&#34;,</span>
+</span></span><span style="display:flex;"><span>             button_dt_specs[i].port<span style="color:#f92672">-&gt;</span>name, 
+</span></span><span style="display:flex;"><span>             button_dt_specs[i].pin, ret);
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">return</span> ret;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    ret <span style="color:#f92672">=</span> <span style="color:#a6e22e">gpio_pin_interrupt_configure_dt</span>(
+</span></span><span style="display:flex;"><span>                    <span style="color:#f92672">&amp;</span>button_dt_specs[i],
+</span></span><span style="display:flex;"><span>                    GPIO_INT_EDGE_TO_INACTIVE);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (ret <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">printf</span>(<span style="color:#e6db74">&#34;Failed to initialize %s: pin %d. Error code: %d&#34;</span>,
+</span></span><span style="display:flex;"><span>             button_dt_specs[i].port<span style="color:#f92672">-&gt;</span>name, 
+</span></span><span style="display:flex;"><span>             button_dt_specs[i].pin,
+</span></span><span style="display:flex;"><span>             ret);
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">return</span> ret;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">printk</span>(<span style="color:#e6db74">&#34;%s: pin %d is successfully initialized.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>,
+</span></span><span style="display:flex;"><span>           button_dt_specs[i].port<span style="color:#f92672">-&gt;</span>name, button_dt_specs[i].pin);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>We create callback functions/interrupt service routines for each button GPIO pin.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">uint8_t</span> button_pin_pushed <span style="color:#f92672">=</span> {<span style="color:#ae81ff">0</span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">on_button0_pressed</span>(<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> device <span style="color:#f92672">*</span>dev, <span style="color:#66d9ef">struct</span> gpio_callback <span style="color:#f92672">*</span>cb, <span style="color:#66d9ef">uint32_t</span> pins) {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">printk</span>(<span style="color:#e6db74">&#34;Button 0 pressed.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span>  button_pin_pushed <span style="color:#f92672">=</span> BUTTON0;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">on_button1_pressed</span>(<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> device <span style="color:#f92672">*</span>dev, <span style="color:#66d9ef">struct</span> gpio_callback <span style="color:#f92672">*</span>cb, <span style="color:#66d9ef">uint32_t</span> pins) {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">printk</span>(<span style="color:#e6db74">&#34;Button 1 pressed.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span>  button_pin_pushed <span style="color:#f92672">=</span> BUTTON1;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">on_button2_pressed</span>(<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> device <span style="color:#f92672">*</span>dev, <span style="color:#66d9ef">struct</span> gpio_callback <span style="color:#f92672">*</span>cb, <span style="color:#66d9ef">uint32_t</span> pins) {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">printk</span>(<span style="color:#e6db74">&#34;Button 2 pressed.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span>  button_pin_pushed <span style="color:#f92672">=</span> BUTTON2;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">on_button3_pressed</span>(<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> device <span style="color:#f92672">*</span>dev, <span style="color:#66d9ef">struct</span> gpio_callback <span style="color:#f92672">*</span>cb, <span style="color:#66d9ef">uint32_t</span> pins) {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">printk</span>(<span style="color:#e6db74">&#34;Button 3 pressed.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span>  button_pin_pushed <span style="color:#f92672">=</span> BUTTON3;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Every time one of the callbacks is executed, we assign the global variable, button_pin_pushed, with the enum value representing the “Push” event so that the LEDs can be turned on with different patterns based on these button events.
+The following two functions are required for this purpose.</p>
+<ul>
+<li><code>gpio_init_callback</code></li>
+<li><code>gpio_add_callback</code></li>
+</ul>
+<p>We can call these two functions in the button initialization loop like this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#75715e">// Initializes the Buttons
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">size_t</span> i <span style="color:#f92672">=</span> {<span style="color:#ae81ff">0</span>}; i <span style="color:#f92672">&lt;</span> <span style="color:#a6e22e">ARRAY_SIZE</span>(button_dt_specs); i<span style="color:#f92672">++</span>) { 
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">* Do other stuffs
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">**/</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">gpio_init_callback</span>(<span style="color:#f92672">&amp;</span>button_cb_data[i], button_handlers[i],
+</span></span><span style="display:flex;"><span>                       <span style="color:#a6e22e">BIT</span>(button_dt_specs[i].pin));
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">gpio_add_callback</span>(button_dt_specs[i].port, <span style="color:#f92672">&amp;</span>button_cb_data[i]);
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">* Do other stuffs
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">**/</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>button_handlers</code> and <code>button_cb_data</code> holds an array of button callback and callback data, respectively. These two are declared as global variables at the top of the file as:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">gpio_callback_handler_t</span> button_handlers[<span style="color:#ae81ff">4</span>] <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>    on_button0_pressed, on_button1_pressed, on_button2_pressed,
+</span></span><span style="display:flex;"><span>    on_button3_pressed};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">struct</span> gpio_callback button_cb_data[<span style="color:#ae81ff">4</span>] <span style="color:#f92672">=</span> {<span style="color:#ae81ff">0</span>};
+</span></span></code></pre></div><p>We can now flash the program into the board to see how the LEDs behave. The following video provides a sense of what the output should look like. The complete code is in the provided repository’s blinky folder.</p>
+<p><em><strong>Buttons Demo</strong></em>
+
+
+    
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+      <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" loading="eager" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/m1Mub627j7Y?autoplay=0&controls=1&end=0&loop=0&mute=0&start=0" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" title="YouTube video"
+      ></iframe>
+    </div>
+</p>
+<h1 id="thank-you-for-reading">Thank you for reading!</h1>
+<p>Stay tuned for more of contents like this! I will continue to post Zephyr Project related contents and talk about other firmware related topics in the upcoming articles.</p>
+<h1 id="useful-resources">Useful Resources</h1>
+<ul>
+<li>NRF5340 DK device tree - nrf5340dk_common.dtsi - <a href="https://github.com/zephyrproject-rtos/zephyr/blob/main/boards/nordic/nrf5340dk/nrf5340dk_common.dtsi">https://github.com/zephyrproject-rtos/zephyr/blob/main/boards/nordic/nrf5340dk/nrf5340dk_common.dtsi</a></li>
+<li>West - <a href="https://docs.zephyrproject.org/latest/develop/west/index.html">https://docs.zephyrproject.org/latest/develop/west/index.html</a></li>
+</ul>
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M4 0h8s2 0 4 2l15 15s2 2 0 4L21 31s-2 2-4 0L2 16s-2-2-2-4V3s0-3 4-3m3 10a3 3 0 0 0 0-6 3 3 0 0 0 0 6"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/device-tree/" rel="tag">device tree</a>
+		</li>
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/zephyrproject/" rel="tag">zephyrproject</a>
+		</li>
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/nrf5340/" rel="tag">NRF5340</a>
+		</li>
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/docker/" rel="tag">Docker</a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+<div class="authorbox clearfix">
+	<figure class="authorbox__avatar">
+		<img alt="Aung Khant Maw avatar" src="/images/avatar.png" class="avatar" height="90" width="90">
+	</figure>
+	<div class="authorbox__header">
+		<span class="authorbox__name">About Aung Khant Maw</span>
+	</div>
+	<div class="authorbox__description">
+		Passionate Embedded Systems Engineer.
+	</div>
+</div>
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/post/zpe001/zpe001/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;Previous</span>
+			<p class="pager__title">ZPE01: How to quickly get started with Zephyr Project - Device trees</p>
+		</a>
+	</div>
+</nav>
+
+
+			</div>
+			<aside class="sidebar"><div class="widget-search widget">
+	<form class="widget-search__form" role="search" method="get" action="https://google.com/search">
+		<input class="widget-search__field" type="search" placeholder="Search…" value="" name="q" aria-label="Search…">
+		<input class="widget-search__submit" type="submit" value="Search">
+		<input type="hidden" name="sitesearch" value="//localhost:1313/">
+	</form>
+</div>
+<div class="widget-recent widget">
+	<h4 class="widget__title">Recent Posts</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/zpe002/zpe002/">ZPE02: Blinky Application With Zephyr Project</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/zpe001/zpe001/">ZPE01: How to quickly get started with Zephyr Project - Device trees</a></li>
+		</ul>
+	</div>
+</div>
+<div class="widget-categories widget">
+	<h4 class="widget__title">Categories</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item">
+				<a class="widget__link" href="/categories/c/c&#43;&#43;/">C/C&#43;&#43;</a></li>
+			<li class="widget__item">
+				<a class="widget__link" href="/categories/firmware/">Firmware</a></li>
+		</ul>
+	</div>
+</div>
+<div class="widget-taglist widget">
+	<h4 class="widget__title">Tags</h4>
+	<div class="widget__content">
+		<a class="widget-taglist__link widget__link btn" href="/tags/device-tree/" title="Device Tree">Device Tree</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/docker/" title="Docker">Docker</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/nrf5340/" title="NRF5340">NRF5340</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/zephyrproject/" title="Zephyrproject">Zephyrproject</a>
+	</div>
+</div>
+</aside>
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+		<div class="footer__copyright">
+			&copy; 2024 Mutex Control.
+			<span class="footer__copyright-credits">All content on this site is the property of Mutex Control and may not be reproduced without permission.</span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+</body>
+</html>
