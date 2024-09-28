@@ -25,7 +25,7 @@
   <meta itemprop="description" content="Learn how to fully utilize Zephyr Project GPIO APIs">
   <meta itemprop="datePublished" content="2024-09-26T22:50:49+07:00">
   <meta itemprop="dateModified" content="2024-09-26T22:50:49+07:00">
-  <meta itemprop="wordCount" content="3700">
+  <meta itemprop="wordCount" content="3698">
   <meta itemprop="keywords" content="Device Tree,Zephyrproject,NRF5340,Docker">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link rel="dns-prefetch" href="//fonts.googleapis.com">
@@ -85,7 +85,9 @@
 			<h1 class="post__title">ZPE02: Blinky Application With Zephyr Project</h1>
 			<div class="post__meta meta">
 <div class="meta__item-datetime meta__item">
-	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-09-26T22:50:49&#43;07:00">September 26, 2024</time></div></div>
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-09-26T22:50:49&#43;07:00">September 26, 2024</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/firmware/" rel="category">Firmware</a>, <a class="meta__link" href="/categories/c/c&#43;&#43;/" rel="category">C/C&#43;&#43;</a>
+	</span>
+</div></div>
 		</header>
 		
 	<figure class="post__thumbnail thumbnail">
@@ -160,8 +162,7 @@ A quick look at the vendor-provided board-level DTS (Device Tree Sources) would 
 <h2 id="node-labels">Node labels</h2>
 <p>We have not yet introduced node <strong>labels</strong> in this article. Node labels are often used with device tree APIs such as <code>DT_NODELABEL</code> to get node <em>identifiers</em>. This allows developers to assign custom, human-readable names to pre-existing nodes, which is one of the easy and good approaches to get the node ids. For example, to get the node ID of <code>led_0</code> in the above DTS, we use <code>DT_NODELABEL(led0)</code> in the application.</p>
 <blockquote>
-<p>Note that node labels and <code>label</code> properties serves different purposes and are not the same. <code>label</code> properties are sometimes used for other purposes such as debugging, logging the node’s name and retrieving the node number/index on the parent device/node.
-{.alert .alert-primary}</p>
+<p>Note that node labels and <code>label</code> properties serves different purposes and are not the same. <code>label</code> properties are sometimes used for other purposes such as debugging, logging the node’s name and retrieving the node number/index on the parent device/node.</p>
 </blockquote>
 <h2 id="gpios">gpios</h2>
 <p>The <code>gpios</code> property is a <strong>phandle-array</strong> type with two specifiers where the first specifier represents the GPIO <strong>pin number</strong> and the second the GPIO <strong>flags</strong>.</p>
