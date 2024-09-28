@@ -24,7 +24,7 @@
   <meta itemprop="description" content="Porting firmware to different processor architecture has never been easier!">
   <meta itemprop="datePublished" content="2024-09-26T22:32:49+07:00">
   <meta itemprop="dateModified" content="2024-09-26T22:32:49+07:00">
-  <meta itemprop="wordCount" content="1727">
+  <meta itemprop="wordCount" content="1717">
   <meta itemprop="image" content="//localhost:1313/images/dt-cover.png">
   <meta itemprop="keywords" content="Device Tree,Zephyrproject">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -127,8 +127,7 @@ Kconfig options are written in files with a .conf extension.</p>
 Here is how the Zephyr documentation describes a simplified version of the device tree build flow:</p>
 <p><img src="/images/dt-build-flow.png" alt="dt-build-flow"></p>
 <blockquote>
-<p>When we refer to “hardware description language”, it is for the sake of simplicity in explaining the concepts and should not be confused with the real hardware description language like VHDL or verilog for FPGAs. Also note that Zephyr uses the device tree at build time, unlike the embedded Linux environment, where the device tree is loaded at boot time.
-{.alert .alert-primary}</p>
+<p>When we refer to “hardware description language”, it is for the sake of simplicity in explaining the concepts and should not be confused with the real hardware description language like VHDL or verilog for FPGAs. Also note that Zephyr uses the device tree at build time, unlike the embedded Linux environment, where the device tree is loaded at boot time.</p>
 </blockquote>
 <h3 id="device-tree-build-flow"><strong>Device tree build flow</strong></h3>
 <p>The Zephyr build system looks at both device tree sources and device tree bindings to generate a C header file, <code>devicetree_generated.h</code>, that contains APIs usually starting with the prefix <code>DT_</code>. Application code and other Zephyr components may call these APIs to interact with the resources. Device tree bindings are <code>YAML</code> files that specify how a particular node should be defined, including its properties and the types of those properties. During the build, the syntax of the device tree sources is checked first, followed by their requirements based on the bindings (which we will explore later). When valid nodes are found, C macros corresponding to the properties in those nodes are generated.</p>
@@ -136,8 +135,7 @@ Here is how the Zephyr documentation describes a simplified version of the devic
 <p>Device tree files use one of these extensions: <code>.dtsi</code>, <code>.dts</code>, or <code>.overlay</code>. In this context, <code>dts</code> stands for &lsquo;device tree source,&rsquo; while <code>dtsi</code> stands for &lsquo;device tree source include,&rsquo; as the contents of <code>.dtsi</code> files are usually included by other higher-level device tree files. Therefore, <code>.dtsi</code> files commonly contain SoC-level definitions, whereas <code>.dts</code> files contain board-level definitions. Both types of files use the same syntax, and the choice of extension is based on conventions.
 In terms of properties, the file extensions do not differ. However, another type of device tree source file, called <strong>overlays</strong>, is often used to override the default properties in the built-in <code>.dts</code> files.</p>
 <blockquote>
-<p>For application development, it is a good practice to use overlays than to modify the built-in sources provided by Zephyr.
-{.alert .alert-primary}</p>
+<p>For application development, it is a good practice to use overlays than to modify the built-in sources provided by Zephyr.</p>
 </blockquote>
 <p>Before we dive into Devicetree APIs in those generated headers, let us look at some of the built-in Zephyr device tree sources files to get familiar with the syntax and learn how we can write, extend or modify these sources in our own applications.</p>
 <h3 id="device-tree-syntax"><strong>Device tree Syntax</strong></h3>
@@ -185,23 +183,20 @@ In terms of properties, the file extensions do not differ. However, another type
 </span></span><span style="display:flex;"><span>phandle-to-my_node<span style="color:#f92672">=</span>&amp;my_node;
 </span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>;
 </span></span></code></pre></div><blockquote>
-<p>The syntax above also shows that you can overwrite or extend a node&rsquo;s characteristics using a phandle. This approach is sometimes used with device tree overlays, which we will cover later in this series.
-{.alert .alert-primary}</p>
+<p>The syntax above also shows that you can overwrite or extend a node&rsquo;s characteristics using a phandle. This approach is sometimes used with device tree overlays, which we will cover later in this series.</p>
 </blockquote>
 <p><code>Array</code> type properties are collections of values. There are different types of arrays: array (32-bit), uint8-array, string-array, phandles, and phandle-array. Here’s how you can describe them:</p>
 <blockquote>
 <p><strong>Q: Why are some values written in hex format and some in decimal in my-array?</strong></p>
 </blockquote>
 <blockquote>
-<p><strong>A</strong>: In Zephyr, integer values are usually assumed to be 32-bit by default. You can write a 32-bit integer in either hex or decimal format—whichever you prefer. The example above is just for demonstration. But be careful with integers of other sizes. For example, an 8-bit integer in my-uint8-array should be written in hex format without the 0x prefix, and a 64-bit value should use the 2-cell format as described earlier.
-{.alert .alert-primary}</p>
+<p><strong>A</strong>: In Zephyr, integer values are usually assumed to be 32-bit by default. You can write a 32-bit integer in either hex or decimal format—whichever you prefer. The example above is just for demonstration. But be careful with integers of other sizes. For example, an 8-bit integer in my-uint8-array should be written in hex format without the 0x prefix, and a 64-bit value should use the 2-cell format as described earlier.</p>
 </blockquote>
 <blockquote>
 <p><strong>Q: Why are there two types of arrays that contain phandles?</strong></p>
 </blockquote>
 <blockquote>
-<p><strong>A</strong>: It can be a bit confusing at first. A phandle is like a reference or pointer to a node, so a phandles is essentially a list of these “references”. On the other hand, a phandle-array includes compound elements where each element consists of a phandle and additional cells called specifiers. The details of what each specifier means or how many there are in a particular phandle are defined in the bindings.
-{.alert .alert-primary}</p>
+<p><strong>A</strong>: It can be a bit confusing at first. A phandle is like a reference or pointer to a node, so a phandles is essentially a list of these “references”. On the other hand, a phandle-array includes compound elements where each element consists of a phandle and additional cells called specifiers. The details of what each specifier means or how many there are in a particular phandle are defined in the bindings.</p>
 </blockquote>
 <h2 id="thanks-for-reading"><strong>Thanks for reading!</strong></h2>
 <p>We will cover hands-on experiments on writing a blinky application using Zephyr Project on the upcoming episodes. Stay tuned!</p>
