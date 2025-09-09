@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZPE01: How to quickly get started with Zephyr Project - Device trees - Kant&#39;s Lab</title>
+<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script><meta name="description" content="">
+    <meta property="og:url" content="http://localhost:1313/posts/01-zpe01/">
+  <meta property="og:site_name" content="Kant&#39;s Lab">
+  <meta property="og:title" content="ZPE01: How to quickly get started with Zephyr Project - Device trees">
+  <meta property="og:description" content="Porting firmware to different processor architecture has never been easier!">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2024-09-26T22:32:49+07:00">
+    <meta property="article:modified_time" content="2024-09-26T22:32:49+07:00">
+    <meta property="article:tag" content="Device Tree">
+    <meta property="article:tag" content="Zephyrproject">
+    <meta property="og:image" content="http://localhost:1313/images/dt-cover.png">
+
+    
+  <meta itemprop="name" content="ZPE01: How to quickly get started with Zephyr Project - Device trees">
+  <meta itemprop="description" content="Porting firmware to different processor architecture has never been easier!">
+  <meta itemprop="datePublished" content="2024-09-26T22:32:49+07:00">
+  <meta itemprop="dateModified" content="2024-09-26T22:32:49+07:00">
+  <meta itemprop="wordCount" content="1717">
+  <meta itemprop="image" content="http://localhost:1313/images/dt-cover.png">
+  <meta itemprop="keywords" content="Device Tree,Zephyrproject">
+
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="//fonts.googleapis.com">
+<link rel="dns-prefetch" href="//fonts.gstatic.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700"><link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/v2-styles.css">
+
+
+    
+
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo logo--mixed">
+		<a class="logo__link" href="/" title="Kant&#39;s Lab" rel="home">
+			<div class="logo__item logo__imagebox">
+					<img class="logo__img" src="/images/avatar.png">
+				</div><div class="logo__item logo__text">
+					<div class="logo__title">Kant&#39;s Lab</div>
+					<div class="logo__tagline">Building Blocks of Tomorrow: Embedded Systems Unveiled</div>
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+  <ul class="menu__list">
+        <li class="menu__item">
+          <a class="menu__link" href="/about/">About</a>
+          
+        </li>
+        <li class="menu__item">
+          <a class="menu__link" href="/posts/">Posts</a>
+          
+        </li>
+  </ul>
+</nav>
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">ZPE01: How to quickly get started with Zephyr Project - Device trees</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-09-26T22:32:49&#43;07:00">September 26, 2024</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/firmware/" rel="category">Firmware</a>, <a class="meta__link" href="/categories/c/c&#43;&#43;/" rel="category">C/C&#43;&#43;</a>
+	</span>
+</div></div>
+		</header>
+		
+	<figure class="post__thumbnail thumbnail">
+		
+		<img class="thumbnail__image" src="/images/dt-cover.png" alt="ZPE01: How to quickly get started with Zephyr Project - Device trees">
+		
+	</figure><div class="content post__content clearfix">
+			<p><em>Porting firmware to different processor architecture has never been easier!</em></p>
+<hr>
+<p>Writing portable firmware that works out of the box on different processor architectures is a challenging task. Your team has spent an extravagant amount of time building a code base completely dependent on a series of system-on-chips (SoCs) supplied by a single vendor for years.</p>
+<p>At one point, a feature request from a customer arises that requires your team to use a particular SoC from a different vendor, which is based on a completely different processor. For example, the firmware your team has built has become so large that it is tightly coupled to vendor-specific toolchains.</p>
+<p>Additionally, it has become quite a task to port the entire code base to a different SoC architecture without spending years—or months if your team is exceptionally skilled—just to modify the existing code base to fit a new SoC. Most of the time, companies cannot afford this, and it would not make your manager happy either.</p>
+<h1 id="zephyr-project"><strong>Zephyr Project</strong></h1>
+<p>The Zephyr Project by the Linux Foundation is a firmware development framework that provides a straightforward way to port firmware from one SoC architecture to another, with just a few configuration changes, making developers&rsquo; lives easier.</p>
+<p>In this article series, we will develop a simple blinking LED application, which serves as the “hello world” of embedded software engineering, and test it on a development board from Nordic Semiconductor called the nRF5340 DK.</p>
+<p>We will then examine how convenient it is to port the code to a different platform, such as the ESP32 dev board.
+To follow along with the experiment, you will need the following hardware:</p>
+<ul>
+<li>NRF5340 DK (You can also use other DKs like the nRF52 DK from Nordic Semiconductor) - <a href="https://www.nordicsemi.com/Products/Development-hardware/nRF5340-DK">https://www.nordicsemi.com/Products/Development-hardware/nRF5340-DK</a></li>
+<li>ESP32 dev kit (from Espressif Systems) - <a href="https://www.espressif.com/en/products/devkits">https://www.espressif.com/en/products/devkits</a></li>
+<li>4 x 1k resistors</li>
+<li>4 x LEDs</li>
+</ul>
+<h1 id="why-nrf5340-dk-and-esp32"><strong>Why NRF5340 DK and ESP32?</strong></h1>
+<p>The reason for choosing the nRF5340 DK and ESP32 for this lesson is to highlight the complete difference in their processor cores. The former is based on Cortex-M33 processors, while the latter is based on the Xtensa LX6 processor. Additionally, these two development boards can readily be purchased from distributors like Digikey, Mouser, and similar sources, or even local suppliers if you are lucky.</p>
+<p>Another reason for selecting these boards is that they are supported by the Zephyr Project, which means that Zephyr already has device drivers, board support packages (BSPs), RTOS services, and other utilities for these boards. Therefore, you need to verify that your boards are included in the list of supported boards before using the Zephyr Project. However, it is more likely that Zephyr already supports them unless you are using a very old, deprecated board or, conversely, a brand-new board that was just released by a vendor.</p>
+<h1 id="configuring-zephyr"><strong>Configuring Zephyr</strong></h1>
+<p>Zephyr provides device drivers, sensor libraries, OS services, various scheduling algorithms, security features, and more.
+You will often need to manage two configuration frameworks—device tree and Kconfig—to interact with these Zephyr components throughout the development lifecycle.</p>
+<h2 id="kconfig"><strong>Kconfig</strong></h2>
+<p>Kconfig is used to enable or disable components (such as drivers, middleware, or specific code sections), define default values, or set preprocessor macros.
+In the past, configurations were managed manually using C header files, which became increasingly cumbersome as the project grew. Kconfig, which has been around for a while, is widely used to simplify this process.
+The build system uses Kconfig files to generate the C-style header file autoconf.h, which can then be included by the application firmware.
+Kconfig options are written in files with a .conf extension.</p>
+<h2 id="device-tree"><strong>Device tree</strong></h2>
+<p>Device trees can be thought of as a hardware description language that tells the build system which implementations of device drivers or other low-level services should be included in the build process based on their descriptions.
+Here is how the Zephyr documentation describes a simplified version of the device tree build flow:</p>
+<p><img src="/images/dt-build-flow.png" alt="dt-build-flow"></p>
+<blockquote>
+<p>When we refer to “hardware description language”, it is for the sake of simplicity in explaining the concepts and should not be confused with the real hardware description language like VHDL or verilog for FPGAs. Also note that Zephyr uses the device tree at build time, unlike the embedded Linux environment, where the device tree is loaded at boot time.</p></blockquote>
+<h3 id="device-tree-build-flow"><strong>Device tree build flow</strong></h3>
+<p>The Zephyr build system looks at both device tree sources and device tree bindings to generate a C header file, <code>devicetree_generated.h</code>, that contains APIs usually starting with the prefix <code>DT_</code>. Application code and other Zephyr components may call these APIs to interact with the resources. Device tree bindings are <code>YAML</code> files that specify how a particular node should be defined, including its properties and the types of those properties. During the build, the syntax of the device tree sources is checked first, followed by their requirements based on the bindings (which we will explore later). When valid nodes are found, C macros corresponding to the properties in those nodes are generated.</p>
+<h3 id="device-tree-file-formats"><strong>Device tree file formats</strong></h3>
+<p>Device tree files use one of these extensions: <code>.dtsi</code>, <code>.dts</code>, or <code>.overlay</code>. In this context, <code>dts</code> stands for &lsquo;device tree source,&rsquo; while <code>dtsi</code> stands for &lsquo;device tree source include,&rsquo; as the contents of <code>.dtsi</code> files are usually included by other higher-level device tree files. Therefore, <code>.dtsi</code> files commonly contain SoC-level definitions, whereas <code>.dts</code> files contain board-level definitions. Both types of files use the same syntax, and the choice of extension is based on conventions.
+In terms of properties, the file extensions do not differ. However, another type of device tree source file, called <strong>overlays</strong>, is often used to override the default properties in the built-in <code>.dts</code> files.</p>
+<blockquote>
+<p>For application development, it is a good practice to use overlays than to modify the built-in sources provided by Zephyr.</p></blockquote>
+<p>Before we dive into Devicetree APIs in those generated headers, let us look at some of the built-in Zephyr device tree sources files to get familiar with the syntax and learn how we can write, extend or modify these sources in our own applications.</p>
+<h3 id="device-tree-syntax"><strong>Device tree Syntax</strong></h3>
+<p>Every tree-like structure has a <em><strong>root</strong></em> and <em><strong>child</strong></em> (or leaf) nodes, and the device tree is no different. In a device tree, every node has an ID and properties that define its characteristics. The root node is represented as <code>/</code>, while child nodes can be named according to the context. Here is the basic syntax for a device tree source file.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>// Root Node
+</span></span><span style="display:flex;"><span>  / <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>  // Child Node
+</span></span><span style="display:flex;"><span>  node_a <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>      // Node properties here 
+</span></span><span style="display:flex;"><span>         <span style="color:#f92672">}</span>;
+</span></span><span style="display:flex;"><span>  // Child Node
+</span></span><span style="display:flex;"><span>  node_b <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>      // Node properties here 
+</span></span><span style="display:flex;"><span>         <span style="color:#f92672">}</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>;
+</span></span></code></pre></div><p>The device tree above shows a root (<code>/</code>) with two child nodes: <code>node_a</code> and <code>node_b</code>. Properties for each node go inside curly braces and end with a semicolon (<code>;</code>).</p>
+<p>Since there are a lot of properties in the Zephyr bindings index, we will focus on just a few standard ones and those relevant to the example nodes in this article. However, if you’re curious about all the details, you can check out the device tree <a href="https://www.devicetree.org/specifications/">specifications</a> or the Zephyr <a href="https://docs.zephyrproject.org/latest/build/dts/api/bindings.html">bindings index</a> for more info on Zephyr-specific properties.</p>
+<h3 id="device-tree-properties"><strong>Device tree Properties</strong></h3>
+<p>Each property of a tree node is a name and value pair, which is normally written with the following syntax.</p>
+<p>Property values come in different types with their own syntax. We will look at a few common ones that you will often see in board-level and SoC-level Zephyr device trees, like <code>int</code>,<code>boolean</code>, <code>string</code>, <code>phandle</code>, and <code>array</code>. If you run into a type that is not covered here, you can always check the device tree specification for more details.</p>
+<hr>
+<h4 id="property-value-types"><strong>Property value types</strong></h4>
+<p><code>Integer</code> type properties usually represent single values, like <code>clock-frequency</code> or <code>easydma-maxcnt-bits</code>, where you just need to set one value for these hardware parameters. You can describe an integer property like this, where 10000 is the 32-bit integer value:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>my-int32-prop<span style="color:#f92672">=</span>&lt;10000&gt;;
+</span></span></code></pre></div><p>Whether the value is in <em>Hz</em> or <em>MHz</em> depends on how the property is defined in the device tree bindings. Also, if you need to use a 64-bit integer, it should be written as two 32-bit values in big-endian order:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>my-u64-prop<span style="color:#f92672">=</span>&lt;0x12345678 0x9ABCDEF0&gt;;
+</span></span></code></pre></div><p>In device tree specs, a “cell” is defined as a 32-bit unit of information.</p>
+<hr>
+<p><code>Boolean</code> type properties are often used to indicate whether a feature exists in a node. These properties are sometimes called &rsquo;empty properties&rsquo; because the property name is written without any value on the right side to show a true status. If the property is missing, it means false.</p>
+<hr>
+<p><code>String</code> type properties are obviously a double quoted text written as:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>my-string-prop<span style="color:#f92672">=</span>”hello”;
+</span></span></code></pre></div><hr>
+<p><code>Phandle</code> type properties are like pointers in C. Instead of pointing to a memory address, a node can be referenced with a phandle by using (&amp;) followed by the node name:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>my_node <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>// Write properties here 
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>&amp;my_node <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>// Using phandle to overwrite properties of my_node
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>other_node <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>// Using phanle as a property value
+</span></span><span style="display:flex;"><span>phandle-to-my_node<span style="color:#f92672">=</span>&amp;my_node;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>;
+</span></span></code></pre></div><blockquote>
+<p>The syntax above also shows that you can overwrite or extend a node&rsquo;s characteristics using a phandle. This approach is sometimes used with device tree overlays, which we will cover later in this series.</p></blockquote>
+<p><code>Array</code> type properties are collections of values. There are different types of arrays: array (32-bit), uint8-array, string-array, phandles, and phandle-array. Here’s how you can describe them:</p>
+<blockquote>
+<p><strong>Q: Why are some values written in hex format and some in decimal in my-array?</strong></p></blockquote>
+<blockquote>
+<p><strong>A</strong>: In Zephyr, integer values are usually assumed to be 32-bit by default. You can write a 32-bit integer in either hex or decimal format—whichever you prefer. The example above is just for demonstration. But be careful with integers of other sizes. For example, an 8-bit integer in my-uint8-array should be written in hex format without the 0x prefix, and a 64-bit value should use the 2-cell format as described earlier.</p></blockquote>
+<blockquote>
+<p><strong>Q: Why are there two types of arrays that contain phandles?</strong></p></blockquote>
+<blockquote>
+<p><strong>A</strong>: It can be a bit confusing at first. A phandle is like a reference or pointer to a node, so a phandles is essentially a list of these “references”. On the other hand, a phandle-array includes compound elements where each element consists of a phandle and additional cells called specifiers. The details of what each specifier means or how many there are in a particular phandle are defined in the bindings.</p></blockquote>
+<h2 id="thanks-for-reading"><strong>Thanks for reading!</strong></h2>
+<p>We will cover hands-on experiments on writing a blinky application using Zephyr Project on the upcoming episodes. Stay tuned!</p>
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M4 0h8s2 0 4 2l15 15s2 2 0 4L21 31s-2 2-4 0L2 16s-2-2-2-4V3s0-3 4-3m3 10a3 3 0 0 0 0-6 3 3 0 0 0 0 6"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/device-tree/" rel="tag">device tree</a>
+		</li>
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/zephyrproject/" rel="tag">zephyrproject</a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/posts/02-zpe02/" rel="next">
+			<span class="pager__subtitle">Next&thinsp;»</span>
+			<p class="pager__title">ZPE02: Blinky Application With Zephyr Project</p>
+		</a>
+	</div>
+</nav>
+
+
+			</div>
+			<aside class="sidebar"><div class="widget-search widget">
+	<form class="widget-search__form" role="search" method="get" action="https://google.com/search">
+		<input class="widget-search__field" type="search" placeholder="Search…" value="" name="q" aria-label="Search…">
+		<input class="widget-search__submit" type="submit" value="Search">
+		<input type="hidden" name="sitesearch" value="/">
+	</form>
+</div>
+
+<div class="widget-recent widget">
+	<h4 class="widget__title">Recent Posts</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/posts/02-zpe02/">ZPE02: Blinky Application With Zephyr Project</a></li>
+			<li class="widget__item"><a class="widget__link" href="/posts/01-zpe01/">ZPE01: How to quickly get started with Zephyr Project - Device trees</a></li>
+		</ul>
+	</div>
+</div>
+<div class="widget-categories widget">
+	<h4 class="widget__title">Categories</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item">
+				<a class="widget__link" href="/categories/c/c&#43;&#43;/">C/C&#43;&#43;</a></li>
+			<li class="widget__item">
+				<a class="widget__link" href="/categories/firmware/">Firmware</a></li>
+		</ul>
+	</div>
+</div>
+<div class="widget-taglist widget">
+    <h4 class="widget__title">Tags</h4>
+    <div class="widget__content">
+            <a class="widget-taglist__link widget__link btn" href="/tags/device-tree/" title="Device Tree">Device Tree</a>
+            <a class="widget-taglist__link widget__link btn" href="/tags/docker/" title="Docker">Docker</a>
+            <a class="widget-taglist__link widget__link btn" href="/tags/nrf5340/" title="NRF5340">NRF5340</a>
+            <a class="widget-taglist__link widget__link btn" href="/tags/zephyrproject/" title="Zephyrproject">Zephyrproject</a>
+    </div>
+</div>
+</aside>
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+		<div class="footer__copyright">
+			&copy; 2025 Kant&#39;s Lab.
+			<span class="footer__copyright-credits">Generated with <a href="https://gohugo.io/" rel="nofollow noopener" target="_blank">Hugo</a> and <a href="https://github.com/mansoorbarri/roadster/" rel="nofollow noopener" target="_blank">Roadster</a> theme.</span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+</body>
+</html>

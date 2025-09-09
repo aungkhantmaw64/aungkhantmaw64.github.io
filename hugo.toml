@@ -1,0 +1,35 @@
+baseurl = "https://aungkhantmaw64.github.io/"
+title = "Kant's Lab"
+languageCode = "en-us"
+theme = "roadster"
+
+[Params]
+description = "Internet of Things (IoT), AI, and Firmware Engineering" # Description of your site
+opengraph = true
+twitter_cards = false
+readmore = true                                                        # Show "Read more" button in list if true
+authorbox = true
+pager = true
+post_meta = ["author", "date", "categories", "translations"]
+mainSections = ["posts", "docs"]
+schema = true
+
+[Params.Author]
+name = "Aung Khant Maw"
+bio = "Just Another Dude with A Logic Analyzer"
+avatar = "images/avatar.png"
+
+[Params.logo]
+image = "images/avatar.png"
+subtitle = "Building Blocks of Tomorrow: Embedded Systems Unveiled" # Logo subtitle
+
+[Params.sidebar]
+home = "right"   # Configure layout for home page
+list = "right"   # Configure layout for list pages
+single = "right" # Configure layout for single pages
+# Enable widgets in given order
+widgets = ["search", "recent", "categories", "taglist"]
+
+[Params.widgets]
+recent_num = 5       # Set the number of articles in the "Recent articles" widget
+tags_counter = false # Enable counter for each tag in "Tags" widget (disabled by default)
