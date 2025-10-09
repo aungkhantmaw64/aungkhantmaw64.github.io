@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configuring PSRAM for ESP32S3 in Zephyr RTOS - Kant&#39;s Lab</title>
+<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script><meta name="description" content="">
+    <meta property="og:url" content="http://localhost:1313/posts/zpe03/">
+  <meta property="og:site_name" content="Kant&#39;s Lab">
+  <meta property="og:title" content="Configuring PSRAM for ESP32S3 in Zephyr RTOS">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-10-08T00:03:13+07:00">
+    <meta property="article:modified_time" content="2025-10-08T00:03:13+07:00">
+    <meta property="article:tag" content="Device Tree">
+    <meta property="article:tag" content="Zephyrproject">
+    <meta property="article:tag" content="PSRAM">
+    <meta property="article:tag" content="ESP32S3">
+
+    
+  <meta itemprop="name" content="Configuring PSRAM for ESP32S3 in Zephyr RTOS">
+  <meta itemprop="datePublished" content="2025-10-08T00:03:13+07:00">
+  <meta itemprop="dateModified" content="2025-10-08T00:03:13+07:00">
+  <meta itemprop="wordCount" content="410">
+  <meta itemprop="keywords" content="Device Tree,Zephyrproject,PSRAM,ESP32S3">
+
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="//fonts.googleapis.com">
+<link rel="dns-prefetch" href="//fonts.gstatic.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700"><link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/v2-styles.css">
+
+
+    
+
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo logo--mixed">
+		<a class="logo__link" href="/" title="Kant&#39;s Lab" rel="home">
+			<div class="logo__item logo__imagebox">
+					<img class="logo__img" src="/images/avatar.png">
+				</div><div class="logo__item logo__text">
+					<div class="logo__title">Kant&#39;s Lab</div>
+					<div class="logo__tagline">Embedded Systems Engineering Blog</div>
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+  <ul class="menu__list">
+        <li class="menu__item">
+          <a class="menu__link" href="/about/">About</a>
+          
+        </li>
+        <li class="menu__item">
+          <a class="menu__link" href="/posts/">Posts</a>
+          
+        </li>
+  </ul>
+</nav>
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">Configuring PSRAM for ESP32S3 in Zephyr RTOS</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-10-08T00:03:13&#43;07:00">October 08, 2025</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/firmware/" rel="category">Firmware</a>, <a class="meta__link" href="/categories/c/c&#43;&#43;/" rel="category">C/C&#43;&#43;</a>
+	</span>
+</div></div>
+		</header>
+		<div class="content post__content clearfix">
+			<h2></h2>
+<h1 id="context">Context</h1>
+<p>With an extra space of 8MB RAM available on an ESP32 device, we can run GUI applications based on libraries such as LVGL, in which frame buffers require a significant memory space (larger frame buffer = better image resolution, for example).
+Alternatively, we can perform complex algorithms with a greater focus on the problem rather than on the space optimization (an issue often encountered in embedded systems development), or have freedom to allocate more memory for RTOS tasks.</p>
+<p>I recently bought an ESP32-S3-DevKitC with 8MB of external PSRAM and 16MB of Flash.
+My initial plan was to use it as a main controller for my smartwatch side project based on Zephyr RTOS.
+Although I haven&rsquo;t found time to work on the side project yet, I decided at least to write about enabling PSRAM on ESP32, which could have been a small part of the project.</p>
+<h1 id="solution">Solution</h1>
+<p>SPI RAM size and Flash size can be checked on the metal shield of the module. They are curved as <code>N16R8</code>, which means 16 MB of Flash and 8MB of RAM. According to its naming convention, <code>N8R4</code> would mean 8MB of flash and 4MB of RAM.
+On the other hand, if you don&rsquo;t trust the numbers on the module, you can install <code>esptool.py</code> tools from Espressif and run the following command in the console, while the dev kit is connected to your PC to find out:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>esptool --port /dev/ttyACM0 flash-id
+</span></span></code></pre></div><blockquote>
+<p>I&rsquo;m using Ubuntu as my host machine and /dev/ttyACM0 is the serial port of the dev kit. This may vary on different platforms.</p></blockquote>
+<p>Here is the output of the above command:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>esptool v5.1.0
+</span></span><span style="display:flex;"><span>Connected to ESP32-S3 on /dev/ttyACM0:
+</span></span><span style="display:flex;"><span>Chip type:          ESP32-S3 <span style="color:#f92672">(</span>QFN56<span style="color:#f92672">)</span> <span style="color:#f92672">(</span>revision v0.2<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>Features:           Wi-Fi, BT <span style="color:#ae81ff">5</span> <span style="color:#f92672">(</span>LE<span style="color:#f92672">)</span>, Dual Core + LP Core, 240MHz, Embedded PSRAM 8MB <span style="color:#f92672">(</span>AP_3v3<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>Crystal frequency:  40MHz
+</span></span><span style="display:flex;"><span>MAC:                50:78:7d:15:ea:e8
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Stub flasher running.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Flash Memory Information:
+</span></span><span style="display:flex;"><span><span style="color:#f92672">=========================</span>
+</span></span><span style="display:flex;"><span>Manufacturer: <span style="color:#ae81ff">68</span>
+</span></span><span style="display:flex;"><span>Device: <span style="color:#ae81ff">4018</span>
+</span></span><span style="display:flex;"><span>Detected flash size: 16MB
+</span></span><span style="display:flex;"><span>Flash type set in eFuse: quad <span style="color:#f92672">(</span><span style="color:#ae81ff">4</span> data lines<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>Flash voltage set by eFuse: 3.3V
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Hard resetting via RTS pin...
+</span></span></code></pre></div><blockquote>
+<p>Older versions of <code>esptool</code> might produce the output in a different format.</p></blockquote>
+<p>The <code>esptool</code> versions may vary with the Zephyr version you use. To check Zephyr version, it would be easier to print the <code>VERSION</code> file like this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>cat <span style="color:#e6db74">${</span>ZEPHYR_ROOT<span style="color:#e6db74">}</span>/zephyr/VERSION
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>VERSION_MAJOR <span style="color:#f92672">=</span> <span style="color:#ae81ff">4</span>
+</span></span><span style="display:flex;"><span>VERSION_MINOR <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>PATCHLEVEL <span style="color:#f92672">=</span> <span style="color:#ae81ff">99</span>
+</span></span><span style="display:flex;"><span>VERSION_TWEAK <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>EXTRAVERSION <span style="color:#f92672">=</span>
+</span></span></code></pre></div><p>Now we have confirmed that my esp32 module really has 16 MB of Flash and 8 MB of SPI RAM.</p>
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M4 0h8s2 0 4 2l15 15s2 2 0 4L21 31s-2 2-4 0L2 16s-2-2-2-4V3s0-3 4-3m3 10a3 3 0 0 0 0-6 3 3 0 0 0 0 6"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/device-tree/" rel="tag">device tree</a>
+		</li>
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/zephyrproject/" rel="tag">zephyrproject</a>
+		</li>
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/psram/" rel="tag">PSRAM</a>
+		</li>
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/esp32s3/" rel="tag">ESP32S3</a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/posts/zpe02/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;Previous</span>
+			<p class="pager__title">Blinky Application With Zephyr Project</p>
+		</a>
+	</div>
+</nav>
+
+
+			</div>
+			<aside class="sidebar"><div class="widget-search widget">
+	<form class="widget-search__form" role="search" method="get" action="https://google.com/search">
+		<input class="widget-search__field" type="search" placeholder="Search…" value="" name="q" aria-label="Search…">
+		<input class="widget-search__submit" type="submit" value="Search">
+		<input type="hidden" name="sitesearch" value="/">
+	</form>
+</div>
+
+<div class="widget-recent widget">
+	<h4 class="widget__title">Recent Posts</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/posts/zpe03/">Configuring PSRAM for ESP32S3 in Zephyr RTOS</a></li>
+			<li class="widget__item"><a class="widget__link" href="/posts/zpe02/">Blinky Application With Zephyr Project</a></li>
+			<li class="widget__item"><a class="widget__link" href="/posts/zpe01/">Device Tree 101 with Zephyr Project</a></li>
+		</ul>
+	</div>
+</div>
+<div class="widget-categories widget">
+	<h4 class="widget__title">Categories</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item">
+				<a class="widget__link" href="/categories/c/c&#43;&#43;/">C/C&#43;&#43;</a></li>
+			<li class="widget__item">
+				<a class="widget__link" href="/categories/firmware/">Firmware</a></li>
+		</ul>
+	</div>
+</div>
+<div class="widget-taglist widget">
+    <h4 class="widget__title">Tags</h4>
+    <div class="widget__content">
+            <a class="widget-taglist__link widget__link btn" href="/tags/device-tree/" title="Device Tree">Device Tree</a>
+            <a class="widget-taglist__link widget__link btn" href="/tags/docker/" title="Docker">Docker</a>
+            <a class="widget-taglist__link widget__link btn" href="/tags/esp32s3/" title="ESP32S3">ESP32S3</a>
+            <a class="widget-taglist__link widget__link btn" href="/tags/nrf5340/" title="NRF5340">NRF5340</a>
+            <a class="widget-taglist__link widget__link btn" href="/tags/psram/" title="PSRAM">PSRAM</a>
+            <a class="widget-taglist__link widget__link btn" href="/tags/zephyrproject/" title="Zephyrproject">Zephyrproject</a>
+    </div>
+</div>
+</aside>
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+		<div class="footer__copyright">
+			&copy; 2025 Kant&#39;s Lab.
+			<span class="footer__copyright-credits">Generated with <a href="https://gohugo.io/" rel="nofollow noopener" target="_blank">Hugo</a> and <a href="https://github.com/mansoorbarri/roadster/" rel="nofollow noopener" target="_blank">Roadster</a> theme.</span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+</body>
+</html>

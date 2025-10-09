@@ -53,7 +53,7 @@ Hard resetting via RTS pin...
 
 > Older versions of `esptool` might produce the output in a different format.
 
-The `esptool` versions may vary with the Zephyr version you use. To check which Zephyr version, its easier to print the `VERSION` file like this:
+The `esptool` versions may vary with the Zephyr version you use. To check Zephyr version, it would be easier to print the `VERSION` file like this:
 
 ```bash
 cat ${ZEPHYR_ROOT}/zephyr/VERSION

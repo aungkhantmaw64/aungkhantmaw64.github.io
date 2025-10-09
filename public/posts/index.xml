@@ -10,23 +10,23 @@
     <atom:link href="http://localhost:1313/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Configuring PSRAM for ESP32S3 in Zephyr RTOS</title>
-      <link>http://localhost:1313/posts/02-zpe03/</link>
+      <link>http://localhost:1313/posts/zpe03/</link>
       <pubDate>Wed, 08 Oct 2025 00:03:13 +0700</pubDate>
-      <guid>http://localhost:1313/posts/02-zpe03/</guid>
+      <guid>http://localhost:1313/posts/zpe03/</guid>
       <description>&lt;h2&gt;&lt;/h2&gt;</description>
     </item>
     <item>
       <title>Blinky Application With Zephyr Project</title>
-      <link>http://localhost:1313/posts/02-zpe02/</link>
+      <link>http://localhost:1313/posts/zpe02/</link>
       <pubDate>Thu, 26 Sep 2024 22:50:49 +0700</pubDate>
-      <guid>http://localhost:1313/posts/02-zpe02/</guid>
+      <guid>http://localhost:1313/posts/zpe02/</guid>
       <description>&lt;p&gt;&lt;em&gt;Learn how to fully utilize Zephyr Project GPIO APIs&lt;/em&gt;&lt;/p&gt;&#xA;&lt;h2&gt;&lt;/h2&gt;</description>
     </item>
     <item>
       <title>Device Tree 101 with Zephyr Project</title>
-      <link>http://localhost:1313/posts/01-zpe01/</link>
+      <link>http://localhost:1313/posts/zpe01/</link>
       <pubDate>Thu, 26 Sep 2024 22:32:49 +0700</pubDate>
-      <guid>http://localhost:1313/posts/01-zpe01/</guid>
+      <guid>http://localhost:1313/posts/zpe01/</guid>
       <description>&lt;p&gt;&lt;em&gt;Porting firmware to different processor architecture has never been easier!&lt;/em&gt;&lt;/p&gt;&#xA;&lt;h2&gt;&lt;/h2&gt;</description>
     </item>
   </channel>
