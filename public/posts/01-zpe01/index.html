@@ -2,11 +2,11 @@
 <html class="no-js" lang="en">
 <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ZPE01: How to quickly get started with Zephyr Project - Device trees - Kant&#39;s Lab</title>
+<title>Device Tree 101 with Zephyr Project - Kant&#39;s Lab</title>
 <script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script><meta name="description" content="">
     <meta property="og:url" content="http://localhost:1313/posts/01-zpe01/">
   <meta property="og:site_name" content="Kant&#39;s Lab">
-  <meta property="og:title" content="ZPE01: How to quickly get started with Zephyr Project - Device trees">
+  <meta property="og:title" content="Device Tree 101 with Zephyr Project">
   <meta property="og:description" content="Porting firmware to different processor architecture has never been easier!">
   <meta property="og:locale" content="en_us">
   <meta property="og:type" content="article">
@@ -15,15 +15,13 @@
     <meta property="article:modified_time" content="2024-09-26T22:32:49+07:00">
     <meta property="article:tag" content="Device Tree">
     <meta property="article:tag" content="Zephyrproject">
-    <meta property="og:image" content="http://localhost:1313/images/dt-cover.png">
 
     
-  <meta itemprop="name" content="ZPE01: How to quickly get started with Zephyr Project - Device trees">
+  <meta itemprop="name" content="Device Tree 101 with Zephyr Project">
   <meta itemprop="description" content="Porting firmware to different processor architecture has never been easier!">
   <meta itemprop="datePublished" content="2024-09-26T22:32:49+07:00">
   <meta itemprop="dateModified" content="2024-09-26T22:32:49+07:00">
   <meta itemprop="wordCount" content="1717">
-  <meta itemprop="image" content="http://localhost:1313/images/dt-cover.png">
   <meta itemprop="keywords" content="Device Tree,Zephyrproject">
 
 <link rel="shortcut icon" href="/favicon.ico">
@@ -48,7 +46,7 @@
 					<img class="logo__img" src="/images/avatar.png">
 				</div><div class="logo__item logo__text">
 					<div class="logo__title">Kant&#39;s Lab</div>
-					<div class="logo__tagline">Building Blocks of Tomorrow: Embedded Systems Unveiled</div>
+					<div class="logo__tagline">Embedded Systems Engineering Blog</div>
 				</div>
 		</a>
 	</div>
@@ -73,21 +71,16 @@
 <main class="main" role="main">
 	<article class="post">
 		<header class="post__header">
-			<h1 class="post__title">ZPE01: How to quickly get started with Zephyr Project - Device trees</h1>
+			<h1 class="post__title">Device Tree 101 with Zephyr Project</h1>
 			<div class="post__meta meta">
 <div class="meta__item-datetime meta__item">
 	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-09-26T22:32:49&#43;07:00">September 26, 2024</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/firmware/" rel="category">Firmware</a>, <a class="meta__link" href="/categories/c/c&#43;&#43;/" rel="category">C/C&#43;&#43;</a>
 	</span>
 </div></div>
 		</header>
-		
-	<figure class="post__thumbnail thumbnail">
-		
-		<img class="thumbnail__image" src="/images/dt-cover.png" alt="ZPE01: How to quickly get started with Zephyr Project - Device trees">
-		
-	</figure><div class="content post__content clearfix">
+		<div class="content post__content clearfix">
 			<p><em>Porting firmware to different processor architecture has never been easier!</em></p>
-<hr>
+<h2></h2>
 <p>Writing portable firmware that works out of the box on different processor architectures is a challenging task. Your team has spent an extravagant amount of time building a code base completely dependent on a series of system-on-chips (SoCs) supplied by a single vendor for years.</p>
 <p>At one point, a feature request from a customer arises that requires your team to use a particular SoC from a different vendor, which is based on a completely different processor. For example, the firmware your team has built has become so large that it is tightly coupled to vendor-specific toolchains.</p>
 <p>Additionally, it has become quite a task to port the entire code base to a different SoC architecture without spending years—or months if your team is exceptionally skilled—just to modify the existing code base to fit a new SoC. Most of the time, companies cannot afford this, and it would not make your manager happy either.</p>
@@ -128,16 +121,16 @@ In terms of properties, the file extensions do not differ. However, another type
 <p>For application development, it is a good practice to use overlays than to modify the built-in sources provided by Zephyr.</p></blockquote>
 <p>Before we dive into Devicetree APIs in those generated headers, let us look at some of the built-in Zephyr device tree sources files to get familiar with the syntax and learn how we can write, extend or modify these sources in our own applications.</p>
 <h3 id="device-tree-syntax"><strong>Device tree Syntax</strong></h3>
-<p>Every tree-like structure has a <em><strong>root</strong></em> and <em><strong>child</strong></em> (or leaf) nodes, and the device tree is no different. In a device tree, every node has an ID and properties that define its characteristics. The root node is represented as <code>/</code>, while child nodes can be named according to the context. Here is the basic syntax for a device tree source file.</p>
+<p>Every tree-like structure has a <strong><em>root</em></strong> and <strong><em>child</em></strong> (or leaf) nodes, and the device tree is no different. In a device tree, every node has an ID and properties that define its characteristics. The root node is represented as <code>/</code>, while child nodes can be named according to the context. Here is the basic syntax for a device tree source file.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>// Root Node
 </span></span><span style="display:flex;"><span>  / <span style="color:#f92672">{</span>
 </span></span><span style="display:flex;"><span>  // Child Node
 </span></span><span style="display:flex;"><span>  node_a <span style="color:#f92672">{</span>
-</span></span><span style="display:flex;"><span>      // Node properties here 
+</span></span><span style="display:flex;"><span>      // Node properties here
 </span></span><span style="display:flex;"><span>         <span style="color:#f92672">}</span>;
 </span></span><span style="display:flex;"><span>  // Child Node
 </span></span><span style="display:flex;"><span>  node_b <span style="color:#f92672">{</span>
-</span></span><span style="display:flex;"><span>      // Node properties here 
+</span></span><span style="display:flex;"><span>      // Node properties here
 </span></span><span style="display:flex;"><span>         <span style="color:#f92672">}</span>;
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>;
 </span></span></code></pre></div><p>The device tree above shows a root (<code>/</code>) with two child nodes: <code>node_a</code> and <code>node_b</code>. Properties for each node go inside curly braces and end with a semicolon (<code>;</code>).</p>
@@ -160,7 +153,7 @@ In terms of properties, the file extensions do not differ. However, another type
 </span></span></code></pre></div><hr>
 <p><code>Phandle</code> type properties are like pointers in C. Instead of pointing to a memory address, a node can be referenced with a phandle by using (&amp;) followed by the node name:</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>my_node <span style="color:#f92672">{</span>
-</span></span><span style="display:flex;"><span>// Write properties here 
+</span></span><span style="display:flex;"><span>// Write properties here
 </span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>;
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>&amp;my_node <span style="color:#f92672">{</span>
@@ -207,7 +200,7 @@ In terms of properties, the file extensions do not differ. However, another type
 	<div class="pager__item pager__item--next">
 		<a class="pager__link" href="/posts/02-zpe02/" rel="next">
 			<span class="pager__subtitle">Next&thinsp;»</span>
-			<p class="pager__title">ZPE02: Blinky Application With Zephyr Project</p>
+			<p class="pager__title">Blinky Application With Zephyr Project</p>
 		</a>
 	</div>
 </nav>
@@ -226,8 +219,9 @@ In terms of properties, the file extensions do not differ. However, another type
 	<h4 class="widget__title">Recent Posts</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
-			<li class="widget__item"><a class="widget__link" href="/posts/02-zpe02/">ZPE02: Blinky Application With Zephyr Project</a></li>
-			<li class="widget__item"><a class="widget__link" href="/posts/01-zpe01/">ZPE01: How to quickly get started with Zephyr Project - Device trees</a></li>
+			<li class="widget__item"><a class="widget__link" href="/posts/02-zpe03/">Configuring PSRAM for ESP32S3 in Zephyr RTOS</a></li>
+			<li class="widget__item"><a class="widget__link" href="/posts/02-zpe02/">Blinky Application With Zephyr Project</a></li>
+			<li class="widget__item"><a class="widget__link" href="/posts/01-zpe01/">Device Tree 101 with Zephyr Project</a></li>
 		</ul>
 	</div>
 </div>
@@ -247,7 +241,9 @@ In terms of properties, the file extensions do not differ. However, another type
     <div class="widget__content">
             <a class="widget-taglist__link widget__link btn" href="/tags/device-tree/" title="Device Tree">Device Tree</a>
             <a class="widget-taglist__link widget__link btn" href="/tags/docker/" title="Docker">Docker</a>
+            <a class="widget-taglist__link widget__link btn" href="/tags/esp32s3/" title="ESP32S3">ESP32S3</a>
             <a class="widget-taglist__link widget__link btn" href="/tags/nrf5340/" title="NRF5340">NRF5340</a>
+            <a class="widget-taglist__link widget__link btn" href="/tags/psram/" title="PSRAM">PSRAM</a>
             <a class="widget-taglist__link widget__link btn" href="/tags/zephyrproject/" title="Zephyrproject">Zephyrproject</a>
     </div>
 </div>

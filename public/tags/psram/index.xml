@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>PSRAM on Kant&#39;s Lab</title>
+    <link>http://localhost:1313/tags/psram/</link>
+    <description>Recent content in PSRAM on Kant&#39;s Lab</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 08 Oct 2025 00:03:13 +0700</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/psram/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Configuring PSRAM for ESP32S3 in Zephyr RTOS</title>
+      <link>http://localhost:1313/posts/02-zpe03/</link>
+      <pubDate>Wed, 08 Oct 2025 00:03:13 +0700</pubDate>
+      <guid>http://localhost:1313/posts/02-zpe03/</guid>
+      <description>&lt;h2&gt;&lt;/h2&gt;</description>
+    </item>
+  </channel>
+</rss>

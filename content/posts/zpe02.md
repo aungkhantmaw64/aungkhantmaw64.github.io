@@ -1,15 +1,14 @@
 +++
-title = 'ZPE02: Blinky Application With Zephyr Project'
+title = 'Blinky Application With Zephyr Project'
 date = 2024-09-26T22:50:49+07:00
-thumbnail = "images/zpe002-cover.png"
 draft = false
 tags = ["device tree", "zephyrproject", "NRF5340", "Docker"]
 categories = ["firmware", "C/C++"]
 +++
 
-*Learn how to fully utilize Zephyr Project GPIO APIs*
-<!--more-->
----
+_Learn how to fully utilize Zephyr Project GPIO APIs_
+
+## <!--more-->
 
 # Getting To Know Board-Level Device Trees
 
@@ -37,7 +36,7 @@ In the above image, the annotated components are:
 
 9. USB connector for on-board J-Link Debugger
 
-A key advantage of using device tree is that application developers don’t need to consult schematics to understand how components like LEDs and buttons are connected to the SoC. 
+A key advantage of using device tree is that application developers don’t need to consult schematics to understand how components like LEDs and buttons are connected to the SoC.
 A quick look at the vendor-provided board-level DTS (Device Tree Sources) would give us the information we need to utilize the on-board peripheral devices. For example, one of the NRF5340 DK device tree sources describes the on-board LEDs as:
 
 ```bash
@@ -61,21 +60,22 @@ leds {
   };
 };
 ```
+
 Let us explore the standard properties we see here in this example.
 
 ## Compatible
 
-First, the `compatible` property  is an important property every nodes except the root must have. This property helps the build system determine the node’s bindings and validate it. 
+First, the `compatible` property is an important property every nodes except the root must have. This property helps the build system determine the node’s bindings and validate it.
 
-Being valid in this context means that the node has a correct syntax, correct required properties, and correct types of values for those properties. In other words, this property basically represents the name of a hardware device, such as `gpio-leds` in this case.  
+Being valid in this context means that the node has a correct syntax, correct required properties, and correct types of values for those properties. In other words, this property basically represents the name of a hardware device, such as `gpio-leds` in this case.
 
-Then, if the node is valid, the build system generates macros for the properties of the nodes, which can then be called by the device drivers and application codes. Here, the `gpio-leds` compatible lets you define a group of led nodes where each child node has `gpios` (*required* property - a must have, cannot be omitted) and `label` (optional) properties.
+Then, if the node is valid, the build system generates macros for the properties of the nodes, which can then be called by the device drivers and application codes. Here, the `gpio-leds` compatible lets you define a group of led nodes where each child node has `gpios` (_required_ property - a must have, cannot be omitted) and `label` (optional) properties.
 
 > `compatible` is a string-array type property and typically follows the `“vendor, device”` format, for example, `compatible=”nordic,nrf-gpio-forwarder”`. However, for the nodes like `leds` node in the above DTS, the vendor part is usually omitted if the node characteristics is vendor-independent. Additionally, sometimes the node only include a single element like, `gpio-leds` and additional string element may be used as an alias if the build system cannot determine the bindings from the first element.
 
 ## Node labels
 
-We have not yet introduced node **labels** in this article. Node labels are often used with device tree APIs such as `DT_NODELABEL` to get node *identifiers*. This allows developers to assign custom, human-readable names to pre-existing nodes, which is one of the easy and good approaches to get the node ids. For example, to get the node ID of `led_0` in the above DTS, we use `DT_NODELABEL(led0)` in the application.
+We have not yet introduced node **labels** in this article. Node labels are often used with device tree APIs such as `DT_NODELABEL` to get node _identifiers_. This allows developers to assign custom, human-readable names to pre-existing nodes, which is one of the easy and good approaches to get the node ids. For example, to get the node ID of `led_0` in the above DTS, we use `DT_NODELABEL(led0)` in the application.
 
 > Note that node labels and `label` properties serves different purposes and are not the same. `label` properties are sometimes used for other purposes such as debugging, logging the node’s name and retrieving the node number/index on the parent device/node.
 
@@ -90,9 +90,10 @@ Now that we are familiar with a few standard properties, from the above leds nod
 # Development Environment Setup
 
 There are 3 ways to setup development environment for a Zephyr Project:
-1. ***Use nrfConnect SDK tools if you frequently work with products from Nordic Semiconductor***. They provide amazing GUI-based tools for installing all necessary toolchains to get started with the Zephyr project development as quick as possible. Additionally, there is a useful VS Code plugin for nRF Connect that simplifies development with features like device tree views, debugging, and device management.
-2. ***Install the toolchains manually***. You can refer to this Zephyr Project documentation but it is not recommended because based on your host platform, it may take quite a while to get started if something did not go well in the installation process. You may end up spending more time setting up the environment than doing actual development.
-3. ***Use a containerized development environment***. We will use Docker for this approach, as it is the quickest way possible. With containers, what works on one machine should work on another regardless of their OS.
+
+1. **_Use nrfConnect SDK tools if you frequently work with products from Nordic Semiconductor_**. They provide amazing GUI-based tools for installing all necessary toolchains to get started with the Zephyr project development as quick as possible. Additionally, there is a useful VS Code plugin for nRF Connect that simplifies development with features like device tree views, debugging, and device management.
+2. **_Install the toolchains manually_**. You can refer to this Zephyr Project documentation but it is not recommended because based on your host platform, it may take quite a while to get started if something did not go well in the installation process. You may end up spending more time setting up the environment than doing actual development.
+3. **_Use a containerized development environment_**. We will use Docker for this approach, as it is the quickest way possible. With containers, what works on one machine should work on another regardless of their OS.
 
 > You can still follow along with the article even if you are not familiar with Docker. Please refer to this [link](https://www.docker.com/101-tutorial/) to learn about Docker.
 
@@ -109,10 +110,12 @@ zephyr_workspace
 ```
 
 We will create a minimal Zephyr application, the “blinky” project inside the `apps` folder and the project should include:
+
 - `main.c`, for the firmware.
 - `prj.conf`, for Kconfig.
 - `CMakeLists.txt`, for the build.
-Now, the project structure should look like this:
+  Now, the project structure should look like this:
+
 ```bash
 ├── apps
 │   └── blinky
@@ -126,6 +129,7 @@ Now, the project structure should look like this:
 ```
 
 Create the `CMakeLists.txt` with the following contents:
+
 ```bash
 cmake_minimum_required(VERSION 3.20.0)
 
@@ -135,10 +139,11 @@ project(blinky)
 
 target_sources(app PRIVATE src/main.c)
 ```
+
 The `prj.conf` is typically empty in a starter project but we will populate this file as the development progresses.
 But, let us leave it for now.
 
-Right, to verify that the build environment is set up correctly, we can write a simple “Hello World” program that prints “Hello World” to the UART0  peripheral and sends it to the PC via the USB cable. Populate the `main.c` file with the following contents.
+Right, to verify that the build environment is set up correctly, we can write a simple “Hello World” program that prints “Hello World” to the UART0 peripheral and sends it to the PC via the USB cable. Populate the `main.c` file with the following contents.
 
 ```C
 #include <zephyr/devicetree.h>
@@ -150,27 +155,34 @@ int main() {
 }
 ```
 
-If you have cloned the repository provided earlier, navigate to the workspace directory within the cloned repository and run the following command to build the docker image. 
+If you have cloned the repository provided earlier, navigate to the workspace directory within the cloned repository and run the following command to build the docker image.
+
 > Ensure that the `make` program is installed in your host system for the following commands to work.
+
 ```bash
 make build-docker-image
 ```
+
 Then, run the following to start the container.
+
 ```bash
 make run-docker-container
 ```
 
-This command will start a Debian-based Zephyr Project container and mount the workspace volume into */opt/zephyrproject/zephyr/workshop*. Then, you can start using the built-in command line tool called `west` to build the firmware we just wrote.
+This command will start a Debian-based Zephyr Project container and mount the workspace volume into _/opt/zephyrproject/zephyr/workshop_. Then, you can start using the built-in command line tool called `west` to build the firmware we just wrote.
 
 # Development Workflow
 
 **West** is a meta-tool provided by Zephyr that allows you to build, flash, debug Zephyr application, sign binaries and do many other interesting tasks. West deserves a separate article for a deeper exploration but here, we will only introduce a few use cases of west that are relevant to this article.
 
 As a first step, we can find out which boards are supported by Zephyr without going to the documentation page by running:
+
 ```bash
 west boards
 ```
+
 Results:
+
 ```bash
 root@3d1a07d63aab:/opt/zephyrproject/zephyr/workshop# west boards
 weact_stm32f405_core
@@ -191,10 +203,13 @@ stm32h750b_dk
 ```
 
 The results show a long list of supported boards. To narrow down the list, we can use filters with the `-n` option. We will use the option with `nrf` keyword to check if our NRF5340DK board is included in the list:
+
 ```bash
 west boards -n nrf
 ```
+
 Results:
+
 ```bash
 root@3d1a07d63aab:/opt/zephyrproject/zephyr/workshop# west boards -n nrf
 nrf52_vbluno52
@@ -219,10 +234,13 @@ nrf5340dk
 ```
 
 Great! The list shows all the boards with names containing the keyword, "nrf", including our board, nrf5340dk. You can also use the `-f` option to print more detailed information about the boards with your preferred format:
+
 ```bash
 west boards -f "{name} => {qualifiers}" -n nrf
 ```
+
 Results:
+
 ```bash
 root@3d1a07d63aab:/opt/zephyrproject/zephyr/workshop# west boards -f "{name} => {qualifiers}" -n nrf
 nrf52_vbluno52 => nrf52832
@@ -244,31 +262,39 @@ nrf52833dk => nrf52820,nrf52833
 nrf52840dk => nrf52840,nrf52811
 ...
 ```
+
 Now that you know your board’s name, you can now use `west` to print out information specifically for your board by specifying its name with the `—board` option:
+
 ```bash
 west boards -f "{name} => {qualifiers}" --board nrf5340dk
 ```
+
 Results:
+
 ```bash
 root@3d1a07d63aab:/opt/zephyrproject/zephyr/workshop# west boards -f "{name} => {qualifiers}" --board nrf5340dk
 nrf5340dk => nrf5340/cpuapp,nrf5340/cpuapp/ns,nrf5340/cpunet
 ```
+
 The `qualifiers` is a useful parameter needed during the build process to specify details about your build target. For example, if you're building a non-secure version of your application firmware, you would use `nrf5340/cpuapp/ns`. If you're targeting the network core of the NRF5340 SoC, you would use `nrf5340/cpunet`.
 
 Now, let us build the firmware with the following west build command and since we do not want to consider the security features yet, we will just use the qualifier for the simple application target, nrf5340/cpuapp:
+
 ```bash
 west build -p always -b nrf5340dk/nrf5340/cpuapp apps/blinky
 ```
+
 Results:
+
 ```bash
-root@6d014c305b28:/opt/zephyrproject/zephyr/workshop# west build -p always -b nrf5340dk/nrf5340/cpuapp apps/blinky  
+root@6d014c305b28:/opt/zephyrproject/zephyr/workshop# west build -p always -b nrf5340dk/nrf5340/cpuapp apps/blinky
 
 -- west build: making build dir /opt/zephyrproject/zephyr/workshop/build pristine
 -- west build: generating a build system
 Loading Zephyr default modules (Zephyr base).
 -- Application: /opt/zephyrproject/zephyr/workshop/apps/blinky
 -- CMake version: 3.25.1
--- Found Python3: /opt/zephyrproject/.venv/bin/python3 (found suitable version "3.11.2", minimum required is "3.8") found components: Interpreter 
+-- Found Python3: /opt/zephyrproject/.venv/bin/python3 (found suitable version "3.11.2", minimum required is "3.8") found components: Interpreter
 -- Cache files will be written to: /root/.cache/zephyr
 -- Zephyr version: 3.7.99 (/opt/zephyrproject/zephyr)
 -- Found west (found suitable version "1.2.0", minimum required is "0.14.0")
@@ -276,7 +302,7 @@ Loading Zephyr default modules (Zephyr base).
 -- ZEPHYR_TOOLCHAIN_VARIANT not set, trying to locate Zephyr SDK
 -- Found host-tools: zephyr 0.16.5 (/zephyr-sdk-0.16.5)
 -- Found toolchain: zephyr 0.16.5 (/zephyr-sdk-0.16.5)
--- Found Dtc: /zephyr-sdk-0.16.5/sysroots/x86_64-pokysdk-linux/usr/bin/dtc (found suitable version "1.6.0", minimum required is "1.4.6") 
+-- Found Dtc: /zephyr-sdk-0.16.5/sysroots/x86_64-pokysdk-linux/usr/bin/dtc (found suitable version "1.6.0", minimum required is "1.4.6")
 -- Found BOARD.dts: /opt/zephyrproject/zephyr/boards/nordic/nrf5340dk/nrf5340dk_nrf5340_cpuapp.dts
 -- Generated zephyr.dts: /opt/zephyrproject/zephyr/workshop/build/zephyr/zephyr.dts
 -- Generated devicetree_generated.h: /opt/zephyrproject/zephyr/workshop/build/zephyr/include/generated/zephyr/devicetree_generated.h
@@ -286,7 +312,7 @@ Loaded configuration '/opt/zephyrproject/zephyr/boards/nordic/nrf5340dk/nrf5340d
 Merged configuration '/opt/zephyrproject/zephyr/workshop/apps/blinky/prj.conf'
 Configuration saved to '/opt/zephyrproject/zephyr/workshop/build/zephyr/.config'
 Kconfig header saved to '/opt/zephyrproject/zephyr/workshop/build/zephyr/include/generated/zephyr/autoconf.h'
--- Found GnuLd: /zephyr-sdk-0.16.5/arm-zephyr-eabi/arm-zephyr-eabi/bin/ld.bfd (found version "2.38") 
+-- Found GnuLd: /zephyr-sdk-0.16.5/arm-zephyr-eabi/arm-zephyr-eabi/bin/ld.bfd (found version "2.38")
 -- The C compiler identification is GNU 12.2.0
 -- The CXX compiler identification is GNU 12.2.0
 -- The ASM compiler identification is GNU
@@ -308,15 +334,19 @@ Memory region         Used Size  Region Size  %age Used
 Generating files from /opt/zephyrproject/zephyr/workshop/build/zephyr/zephyr.elf for board: nrf5340dk
 
 ```
+
 The `-p` option stands for pristine, with three choices available: `always`, `never`, and `auto`. In the example above, always means that each time the command is run, the existing build directory will be cleaned, and the application will be rebuilt from scratch. The auto choice allows the build system to decide whether everything or just part of the application needs to be rebuilt.
 
 While the always pristine build ensures a clean build, it can be significantly slower than auto for large codebases. So, choose this option wisely to control the build process.
 
 Now connect your board to the PC and flash the firmware with:
+
 ```bash
 west flash
 ```
+
 Results:
+
 ```bash
 root@811c26a4fc90:/opt/zephyrproject/zephyr/workshop# west flash
 
@@ -339,17 +369,18 @@ image.py: sign the payload
 
 ```
 
-
 You can use serial monitor software like `minicom` to see the console output from the DK board UART. Specify the port with the `-D` option, in this case `/dev/ttyACM1`. This can be different on your host platform:
 
 ```bash
 minicom -D /dev/ttyACM1
 ```
+
 Results:
+
 ```bash
 Welcome to minicom 2.8
 
-OPTIONS: I18n 
+OPTIONS: I18n
 Port /dev/ttyACM1, 11:12:14
 
 Press CTRL-A Z for help on special keys
@@ -357,17 +388,20 @@ Press CTRL-A Z for help on special keys
 *** Booting Zephyr OS build v3.7.0-1625-gf29377a12cb5 ***
 Hello world
 ```
+
 > If you do not see the log, try pushing the reset button as it might have already been printed out and the console did not catch it.
 
 # A Brief Introduction To Device Tree APIs
 
 We will use the following APIs to interact with GPIO devices:
+
 - `gpio_is_ready_dt` - to validate if the GPIO port connected to the LEDs is ready.
 - `gpio_pin_configure_dt` - to configure the LED pins as GPIO output that are turned off at initialization stage.
 - `gpio_pin_interrupt_configure_dt` - to configure the push buttons as interrupt driven GPIO inputs.
 - `gpio_pin_set_dt` - to turn on and off the LEDS.
 
 We should also be familiar with the following data structures:
+
 - `struct device` - a structure representing an instance of peripheral device. (gpio, i2c, spi, etc.)
 - `struct gpio_dt_spec` - a structure containing data fields such as port, pin, and dt_flag.
 
@@ -376,33 +410,40 @@ The above structs must be created but should not be populated manually. Their va
 Now, we are ready to write our first blinky application.
 
 Let us enable GPIO APIs by setting CONFIG_GPIO=y in the prj.conf file:
+
 ```bash
 CONFIG_GPIO=y
 ```
+
 And include the following header files at the top of the main.c file:
+
 ```C
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/kernel.h>
 ```
+
 - `<zephyr/devicetree.h>` for device tree APIs
 
 - `<zephyr/drivers/gpio.h>` for GPIO driver APIs
 
 - `<zephyr/kernel.h>` for kernel services like `k_msleep` for delaying some intervals between on/off states of the LEDs.
 
-We will obtain device tree specifications for each on-board LED using `GPIO_DT_SPEC_GET`. This macro populates an instance of `struct gpio_dt_spec` with properties defined in the device tree sources with the `gpio-leds` compatible. It takes two arguments: *node_id* and *property*.
+We will obtain device tree specifications for each on-board LED using `GPIO_DT_SPEC_GET`. This macro populates an instance of `struct gpio_dt_spec` with properties defined in the device tree sources with the `gpio-leds` compatible. It takes two arguments: _node_id_ and _property_.
 
-You can obtain the node_id  of a device tree node using several APIs such as `DT_ALIAS`, `DT_CHOSEN`, `DT_NODELABEL`, etc. We will use `DT_NODELABEL` as it is more convenient to use the node labels (led0, led1, led2, and led3) in this example as they are already defined by the board-level source tree. If you are interested in other API, see this [link](https://docs.zephyrproject.org/latest/build/dts/api/api.html). 
+You can obtain the node_id of a device tree node using several APIs such as `DT_ALIAS`, `DT_CHOSEN`, `DT_NODELABEL`, etc. We will use `DT_NODELABEL` as it is more convenient to use the node labels (led0, led1, led2, and led3) in this example as they are already defined by the board-level source tree. If you are interested in other API, see this [link](https://docs.zephyrproject.org/latest/build/dts/api/api.html).
 
 Here is one way to create instances representing the 4 LED pins in the global scope:
+
 ```c
 const struct gpio_dt_spec led0 = GPIO_DT_SPEC_GET(DT_NODELABEL(led0), gpios);
 const struct gpio_dt_spec led1 = GPIO_DT_SPEC_GET(DT_NODELABEL(led1), gpios);
 const struct gpio_dt_spec led2 = GPIO_DT_SPEC_GET(DT_NODELABEL(led2), gpios);
 const struct gpio_dt_spec led3 = GPIO_DT_SPEC_GET(DT_NODELABEL(led3), gpios);
 ```
+
 The `GPIO_DT_SPEC_GET` macro uses the node id returned by `DT_NODELABEL` and use the `gpios` property to get the specifications of a GPIO pin. Although, the above code works, it contains some duplication and can be improved as follows:
+
 ```c
 enum { LED0, LED1, LED2, LED3 };
 
@@ -412,7 +453,9 @@ const struct gpio_dt_spec led_dt_specs[4] = {
     [LED2] = GPIO_DT_SPEC_GET(DT_NODELABEL(led2), gpios),
     [LED3] = GPIO_DT_SPEC_GET(DT_NODELABEL(led3), gpios)};
 ```
+
 The improve code packs all the device tree specs into a single array, which reduces code duplication and allows the repeated operations to be performed in a loop. Let us initialize the LEDs as GPIO pins as follows:
+
 ```c
 int main() {
   for (size_t i = {0}; i < ARRAY_SIZE(led_dt_specs); i++) {
@@ -435,13 +478,15 @@ int main() {
   return 0;
 }
 ```
-First, we iterate through the `led_dt_specs` to do the same initialization steps for all the LED pins. `ARRAY_SIZE` macro returns the number of elements in the given array. 
+
+First, we iterate through the `led_dt_specs` to do the same initialization steps for all the LED pins. `ARRAY_SIZE` macro returns the number of elements in the given array.
 
 Before any initialization, the GPIO devices are checked if they are ready first with the `gpio_is_ready_dt` and then configured as a GPIO output pin with intial LOW state by calling the `gpio_pin_configure_dt` function with the `GPIO_OUTPUT_INACTIVE` flag.
 
 Zephyr uses POSIX compliant error codes where functions return non-zero integer values to indicate an issue in a operation. So, we check this error code in the above example and let the code break out of the main function if any device initialization did not succeed.
 
 Now we will make the LEDs blink one after another with 500 milliseconds intervals between on/off states within an infinite loop. k_msleep is an RTOS service that makes the current task (caller) enter sleep mode for a given time period in terms of milliseconds. gpio_pin_set_dt can be used to set the state of the given GPIO spec. It also returns an error code, which is omitted here for the sake of simplicity.
+
 ```c
 while (1) {
   static int led_state = 1;
@@ -453,7 +498,9 @@ while (1) {
   }
 }
 ```
+
 Here is the complete code for the blinky application.
+
 ```c
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
@@ -498,11 +545,13 @@ int main() {
 }
 
 ```
+
 Now if we build and flash the program as described earlier, you will see the console log output as follows:
+
 ```bash
 Welcome to minicom 2.8
 
-OPTIONS: I18n 
+OPTIONS: I18n
 Port /dev/ttyACM1, 14:19:21
 
 Press CTRL-A Z for help on special keys
@@ -517,6 +566,7 @@ gpio@842500: pin 30 is successfully initialized.
 gpio@842500: pin 31 is ready.
 gpio@842500: pin 31 is successfully initialized.
 ```
+
 Also, you can see the blinking LEDs as shown in the following video. Now let us add button inputs for our Zephyr application. In the `nrf5340dk_common.dtsi`,the buttons are defined as:
 
 ```c
@@ -544,10 +594,12 @@ buttons {
     };
 };
 ```
-***Blink LED Demo***
+
+**_Blink LED Demo_**
 {{< youtube wBlU19iyMaY >}}
 
 Cool! Now, we will create another `struct gpio_dt_spec` array for the buttons:
+
 ```c
 const struct gpio_dt_spec led_dt_specs[4] = {
     [BUTTON0] = GPIO_DT_SPEC_GET(DT_NODELABEL(button0), gpios),
@@ -555,23 +607,24 @@ const struct gpio_dt_spec led_dt_specs[4] = {
     [BUTTON2] = GPIO_DT_SPEC_GET(DT_NODELABEL(button2), gpios),
     [BUTTON3] = GPIO_DT_SPEC_GET(DT_NODELABEL(button3), gpios)};
 ```
+
 From the device tree, we can say that buttons are pulled up by default. So, we should configures these pins as interrupt driven pins which triggers on the pin state change to zero with `gpio_pin_interrupt_configure_dt` and the `GPIO_INT_EDGE_TO_INACTIVE` flag.
 
 ```c
 // Initializes the Buttons
 for (size_t i = {0}; i < ARRAY_SIZE(button_dt_specs); i++) {
    if (!gpio_is_ready_dt(&button_dt_specs[i])) {
-      printk("%s: pin %d is not ready.\n", 
+      printk("%s: pin %d is not ready.\n",
              button_dt_specs[i].port->name,
              button_dt_specs[i].pin);
       return -EBUSY;
     }
-    int ret = gpio_pin_configure_dt(&button_dt_specs[i], 
+    int ret = gpio_pin_configure_dt(&button_dt_specs[i],
                                    GPIO_INPUT);
     if (ret < 0) {
-      printk("Failed to initialize %s: pin %d as GPIO input. 
+      printk("Failed to initialize %s: pin %d as GPIO input.
       Error code: %d",
-             button_dt_specs[i].port->name, 
+             button_dt_specs[i].port->name,
              button_dt_specs[i].pin, ret);
       return ret;
     }
@@ -581,7 +634,7 @@ for (size_t i = {0}; i < ARRAY_SIZE(button_dt_specs); i++) {
                     GPIO_INT_EDGE_TO_INACTIVE);
     if (ret < 0) {
       printf("Failed to initialize %s: pin %d. Error code: %d",
-             button_dt_specs[i].port->name, 
+             button_dt_specs[i].port->name,
              button_dt_specs[i].pin,
              ret);
       return ret;
@@ -590,7 +643,9 @@ for (size_t i = {0}; i < ARRAY_SIZE(button_dt_specs); i++) {
            button_dt_specs[i].port->name, button_dt_specs[i].pin);
 }
 ```
+
 We create callback functions/interrupt service routines for each button GPIO pin.
+
 ```C
 static uint8_t button_pin_pushed = {0};
 
@@ -614,15 +669,18 @@ void on_button3_pressed(const struct device *dev, struct gpio_callback *cb, uint
   button_pin_pushed = BUTTON3;
 }
 ```
+
 Every time one of the callbacks is executed, we assign the global variable, button_pin_pushed, with the enum value representing the “Push” event so that the LEDs can be turned on with different patterns based on these button events.
 The following two functions are required for this purpose.
+
 - `gpio_init_callback`
 - `gpio_add_callback`
 
 We can call these two functions in the button initialization loop like this:
+
 ```C
 // Initializes the Buttons
-for (size_t i = {0}; i < ARRAY_SIZE(button_dt_specs); i++) { 
+for (size_t i = {0}; i < ARRAY_SIZE(button_dt_specs); i++) {
 /**
 * Do other stuffs
 **/
@@ -635,7 +693,9 @@ gpio_add_callback(button_dt_specs[i].port, &button_cb_data[i]);
 }
 
 ```
+
 `button_handlers` and `button_cb_data` holds an array of button callback and callback data, respectively. These two are declared as global variables at the top of the file as:
+
 ```c
 static const gpio_callback_handler_t button_handlers[4] = {
     on_button0_pressed, on_button1_pressed, on_button2_pressed,
@@ -646,14 +706,14 @@ static struct gpio_callback button_cb_data[4] = {0};
 
 We can now flash the program into the board to see how the LEDs behave. The following video provides a sense of what the output should look like. The complete code is in the provided repository’s blinky folder.
 
-***Buttons Demo***
+**_Buttons Demo_**
 {{< youtube m1Mub627j7Y >}}
 
-# Thank you for reading!
+# Thank you for reading
 
 Stay tuned for more of contents like this! I will continue to post Zephyr Project related contents and talk about other firmware related topics in the upcoming articles.
 
 # Useful Resources
-- NRF5340 DK device tree - nrf5340dk_common.dtsi - https://github.com/zephyrproject-rtos/zephyr/blob/main/boards/nordic/nrf5340dk/nrf5340dk_common.dtsi
-- West - https://docs.zephyrproject.org/latest/develop/west/index.html
 
+- NRF5340 DK device tree - nrf5340dk_common.dtsi - <https://github.com/zephyrproject-rtos/zephyr/blob/main/boards/nordic/nrf5340dk/nrf5340dk_common.dtsi>
+- West - <https://docs.zephyrproject.org/latest/develop/west/index.html>
