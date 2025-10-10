@@ -2,11 +2,13 @@
 title = 'Blinky Application With Zephyr Project'
 date = 2024-09-26T22:50:49+07:00
 draft = false
+images = ["images/light-bulb.jpg"]
+thumbnail = "images/light-bulb.jpg"
 tags = ["device tree", "zephyrproject", "NRF5340", "Docker"]
 categories = ["firmware", "C/C++"]
 +++
 
-_Learn how to fully utilize Zephyr Project GPIO APIs_
+_Learning how to fully utilize Zephyr Project GPIO APIs_
 
 ## <!--more-->
 

@@ -1,6 +1,8 @@
 +++
 title = 'Device Tree 101 with Zephyr Project'
 date = 2024-09-26T22:32:49+07:00
+images = ["images/a-tree.jpg"]
+thumbnail = "images/a-tree.jpg"
 draft = false
 tags = ["device tree", "zephyrproject"]
 categories = ["firmware", "C/C++"]
