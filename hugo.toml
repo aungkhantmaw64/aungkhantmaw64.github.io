@@ -21,7 +21,7 @@ avatar = "images/avatar.png"
 
 [Params.logo]
 image = "images/avatar.png"
-subtitle = "Embedded Systems Engineering Blog" # Logo subtitle
+subtitle = "Embedded Systems Engineering Blog From A Dude Who Likes Laphat Thoke" # Logo subtitle
 
 [Params.sidebar]
 home = "right"   # Configure layout for home page
