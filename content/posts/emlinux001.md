@@ -3,6 +3,8 @@ date = '2025-10-12T16:41:18+07:00'
 draft = false
 title = 'Roll Your Own (RYO) Embedded Linux Distro'
 thumbnail = "images/blue-penguin.jpg"
+tags = ["u-boot", "busybox", "linux"]
+categories = ["Embedded Linux"]
 +++
 
 _Having fun with U-Boot, Linux Kernel, and BusyBox_
