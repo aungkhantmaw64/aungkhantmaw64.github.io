@@ -33,6 +33,7 @@ Here are the topics that interest me most and that I'd like to write about:
 
 - Embedded Linux (Yocto, Buildroot, OpenWrt)
 - Single Board Computers
+- Advanced Digital Hardware Design (PCB, Signal Integrity, EMC/EMI)
 - TinyML (Machine Learning in Resource-Constrained Devices)
 - Distributed Embedded Systems (Mesh Networks and IoT Connectivity)
 - Firmware Architecture & Design Patterns
