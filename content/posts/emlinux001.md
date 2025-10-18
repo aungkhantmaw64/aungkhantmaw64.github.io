@@ -7,176 +7,78 @@ tags = ["u-boot", "busybox", "linux"]
 categories = ["Embedded Linux"]
 +++
 
-_Having fun with U-Boot, Linux Kernel, and BusyBox_
+_Having Fun With U-Boot, Linux, & Busybox_
 
 ## <!--more-->
 
-Building a custom embedded Linux image for single board computers (SBC) often requires build systems like `Buildroot`, and `Yocto`. However, today I wanted to learn how to create my own image without using these build systems, for educational purposes. I have a few SBCs, such as `Beagle Bone Black` and `Raspberry PI 4 model B`, available. So, I'll use these for my experiments and may also build an image for the QEMU emulator along the way.
+## Background
 
-## Installing Toolchains
+Building a custom Linux image for single-board computer platforms without using any build systems is a tremendous learning experience. You work on toolchain installation and customization, bootloader and kernel configuration, and finally, the root file system. This process helps you understand what happens at each stage of the embedded system development life cycle.
 
-First and foremost, the important step is to install toolchains required for cross-compiling, since our target board often has a different CPU architecture than the host PC we use for compiling the code.
+Why would we build a custom image in the first place?
+Why not just use off-the-shelf operating systems provided by the board vendors, such as [Raspberry Pi OS](https://www.raspberrypi.com/software/operating-systems/) or [Beagle Bone OS](https://docs.beagleboard.org/boards/beaglebone/blue/flashing-firmware.html)?
 
-> For example, the **Beagle Bone Black** uses the Texas Instruments Sitara `AM335x` processor, which is based on `ARM Cortex-A8`. Also, the **Raspberry Pi 4** uses the Broadcom `BCM2711` SoC, which features a quad-core `ARM Cortex-A72` CPU.
+Well, the thing is that these OSes are built for a general user base. As a result, they contain extra redundant software packages for all kinds of users, such as a built-in IDE and a music player, that are probably not required for your specific commercial applications. Therefore, they take up extra resources, for example, CPU, RAM, and storage, which could have been used by your own business applications, and for that, removing them and their related library dependencies by hand is an _arduous_ task.
 
-Installing the toolchains could be as simple as downloading the pre-built binaries and adding them to the system `PATH`. But, here I will go with the hard way that uses `crosstool-ng`, a tool that allows us to customize the toolchain we want to install.
+> By the way, using a built-in IDE like [_Thonny_](https://thonny.org/) on Raspberry Pi OS to develop production code is slow and inefficient; It should only be used for educational purposes.
 
-### Installing Dependencies
+Despite not being suitable for commercial applications, using an off-the-shelf OS is quite simple. You just flash the OS image to an SD card that is larger than the image itself using a tool like [_balenaEtcher_](https://etcher.balena.io/). After flashing the image, insert the SD card into the board, set it to **SD Card Boot Mode** (_this step may vary depending on your board; consult your board's technical user manual for instructions_), and boot it. That's it!
 
-I'm using **PoP! OS**, a distro based on **Ubuntu**, on my host machine. Before moving forward, we need to install the dependencies in advance with this command:
+> Some vendors might even provide a script to copy the image from the SD card to the on-board eMMC (Embedded Multi-Media Card) flash memory, allowing you to remove the SD card later if you wish, since your board can now boot from the eMMC.
 
-```bash
-sudo apt-get update && sudo apt-get install -y autoconf automake bc bison bzip2 build-essential coccinelle \
-  device-tree-compiler dfu-util efitools flex git gcc g++ gperf gdisk graphviz gawk help2man imagemagick \
-  liblz4-tool libgnutls28-dev libguestfs-tools libncurses-dev libncurses5-dev \
-  libpython3-dev libsdl2-dev libssl-dev lz4 lzma lzma-alone libtool libtool-bin libstdc++6 meson \
-  ninja-build openssl pkg-config python3-dev python3-asteval python3-coverage python3-filelock \
-  python3-pkg-resources python3-pycryptodome python3-pyelftools \
-  python3-pytest python3-pytest-xdist python3-sphinxcontrib.apidoc \
-  python3-sphinx-rtd-theme python3-subunit python3-testtools \
-  python3-virtualenv patch rsync swig texinfo uuid-dev unzip wget xz-utils linux-libc-dev linux-headers-generic
+But what if you want to boot the image from a different medium, or even over a network connection? Off-the-shelf bootloaders are not designed for this purpose, and it is practically difficult to customize them to your advantage.
 
-```
+_Why, then, would we want to boot the OS (kernel) image from a different channel when we can just use the SD card?_
 
-> A link to the `Dockerfile` for this build environment is provided in the references section. We can use it, if we don't want to install the tools natively.
+The answer is that a typical development setup for an SBC should allow developers to modify the kernel and root file system and flash them to the board's storage device as quickly as possible. It would be quite painful to move the SD card between your host PC and the target board every time you modify something.
 
-Let us create a project folder and clone the `crosstool-ng` repo in it:
+### Typical Development Workflow
 
-```bash
-git clone https://github.com/crosstool-ng/crosstool-ng
-```
+Similar to most embedded systems, most SBCs provide a [JTAG](https://www.xjtag.com/about-jtag/what-is-jtag/) interface which you can use to debug/flash programs and even upload a bootloader directly to the RAM in some cases (see [Falcon Mode from U-Boot](https://docs.u-boot.org/en/latest/develop/falcon.html), for e.g). However, there is a good chance that you probably won't need it most of the time, unless you are developing your own bootloader or kernel. In most cases, developers utilize on-board USB ports, or Ethernet for this purpose.
 
-We can bootstrap `crosstool-ng` and build it with the following commands:
+> TIP: A developer should be knowledgeable about how many media a specific board has that can be used to boot the OS image.
 
-```bash
-cd crosstool-ng
-./bootstrap
-./configure --prefix=/opt/crosstool-ng
-make
-make install
-export PATH="$PATH:/opt/crosstool-ng/bin"
-```
+For example, with the Beagle Bone Black, you can use either the _Ethernet_ connection or the _USB_ client configured for ["Ethernet over USB"](https://en.wikipedia.org/wiki/Ethernet_over_USB) to load the `kernel image` and `rootfs` over a local IP network using [TFTP](https://en.wikipedia.org/wiki/Trivial_File_Transfer_Protocol) (Trivial File Transfer Protocol) and [NFS](https://en.wikipedia.org/wiki/Network_File_System) (Network File System).
 
-> We can specify the build directory with `prefix` option,`/opt/crosstool-ng` in this example. Change this to a preferred directory if necessary.
+![Beagle Bone Black](/images/bbb.png "Image taken from the technical reference manual")
 
-After installing ct-ng, we can run the following command to open the configuration menu for installing the toolchains.
+Then, you can use the `Debug Serial Header` on the Beagle Bone Black, which exposes a UART interface that allows you to monitor console logs generated by both the bootloader and the kernel. A UART-to-TTL logic converter would be required to connect your host PC to it (see [this](https://www.adafruit.com/product/954) for example).
 
-```bash
-ct-ng menuconfig
-```
+_The serial header pin-out on the Beagle Bone Black_:
 
-A graphical user interface for the configuration menu similar to the following picture will appear. And it is important to learn how to work with `Kconfig` as we will often encounter `menuconfig` in different stages of embedded Linux development since most build systems commonly use `Kconfig` for configuration.
+| Pin No. | Signal        |
+| ------- | ------------- |
+| 1       | Ground        |
+| 4       | Rx (Receive)  |
+| 5       | Tx (Transmit) |
 
-![crosstool-ng menuconfig](/images/ct-ng-menuconfig.png)
+![Beagle Bone Black](/images/bbb-2.png "Image taken from the technical reference manual")
 
-First-timers who have no experience working with the toolchains can get significantly overwhelmed by the available options. This may still be true when working with the bootloader (U-Boot), kernel, and rootfs. For this reason, we can always find the pre-built configuration files provided by the vendor in almost all the projects.
+Suppose you have decided to use the Ethernet for flashing the kernel and UART for monitoring the logs or interacting with the board. _What's next?_
 
-For `crosstool-ng`, we can run the following commands to see the available configurations:
+#### Bootloader
 
-```bash
-ct-ng list-samples
-```
+Understanding how the bootloader works and the boot sequence for your specific SBC is really important. The bootloader’s main job is to get board-specific device drivers and memory controllers (like DDR RAM, eMMC, SD Card, etc.) up and running before it loads the kernel. You can actually tell the bootloader where to load the kernel from; maybe from eMMC during production, or over an Ethernet connection during the development stage.
 
-The output results could be similar to this:
+The **Beagle Bone Black** needs two stage bootloader designs. For example, when you compile the `u-boot` bootloader for this board, two binaries, named `MLO` and `u-boot.img`, would be generated.
 
-```bash
-Status  Sample name
-[L...]   aarch64-ol7u9-linux-gnu
-[L...]   aarch64-ol8u10-linux-gnu
-[L...]   aarch64-ol8u6-linux-gnu
-[L...]   aarch64-ol8u7-linux-gnu
-[L...]   aarch64-ol8u8-linux-gnu
-[L...]   aarch64-ol8u9-linux-gnu
-[L...]   aarch64-ol9u2-linux-gnu
-[L...]   aarch64-ol9u3-linux-gnu
-[L...]   aarch64-ol9u4-linux-gnu
-[L...]   aarch64-ol9u5-linux-gnu
-[L...]   aarch64-rpi3-linux-gnu
-[L...]   aarch64-rpi4-linux-gnu
-[L...]   aarch64-unknown-linux-gnu
-[L...]   aarch64-unknown-linux-musl
-[L...]   aarch64-unknown-linux-uclibc
-[L...]   alphaev56-unknown-linux-gnu
-[L...]   alphaev67-unknown-linux-gnu
-[L...]   arc-arc700-linux-uclibc
-[L...]   arc-archs-linux-gnu
-[L...]   arc-multilib-elf32
-[L...]   arc-multilib-linux-gnu
-[L...]   arc-multilib-linux-uclibc
-[L...]   arm-bare_newlib_cortex_m3_nommu-eabi
-```
+> There are plenty of other bootloaders out there, but I don’t want to sound smart by listing names I’ve never actually used. If you ask me why I chose `u-boot`, it’s simply because I’m familiar with it and have seen it used in a lot of other projects.
 
-From the output, we can find the names of the toolchains with the corresponding supported CPU architecture. What we are looking for here are `arm-cortex_a8-linux-gnueabi` and `arm-unknown-linux-gnueabi`.
+`MLO` is a Secondary Program Loader (`SPL`) that’s first loaded by the 'ROM' code, the Primary Program Loader, which is hard-coded inside the SoC during manufacturing and can’t be modified by third parties. The size of `MLO` is intentionally kept smaller than the on-chip memory, which is **128 KB** (see Page 8 of the [datasheet](https://www.ti.com/lit/ds/symlink/am3358.pdf)), for example, in the `AM335x` SoC used by the Beagle Bone Black. That’s why the bootloader uses a two-stage design.
 
-> `arm-cortex_a8-linux-gnueabi` is specifically optimized for `Cortex-A8`, while `arm-unknown-linux-gnueabi` is a more generic toolchain, that works with most `ARM`-based SoCs.
+The full `u-boot` bootloader would barely fit in that tiny 128 KB, since the total binary size of board-specific device drivers and other components easily exceeds it. Thus, the job of `MLO` is to initialize the external RAM device (`512MB DDR3L`) which is larger than itself, and then, load the Tertiary Program Loader (TPL), `u-boot.img`, on it.
 
-We can use the following command to inspect the toolchain in more detail:
+In short, the `ROM` code loads the `SPL`, then the `SPL` loads the `TPL`, and finally, the `TPL` loads the kernel itself. When the system starts up, the `ROM` code searches for the bootloader across all available media, according to the boot sequence set by the `SYSBOOT` configuration pins (see **Table 26-7** of the [datasheet](https://www.ti.com/lit/ug/spruh73q/spruh73q.pdf?ts=1762001206322&ref_url=https%253A%252F%252Fwww.google.com%252F)). It tries the first media in the sequence, and if it finds a bootloader, it loads it. If not, it moves on to the next media in the boot order, repeating this process until it either finds a bootloader or runs out of options.
 
-```bash
-ct-ng show-arm-cortex_a8-linux-gnueabi
-```
-
-And, the output will be similar to this:
-
-```bash
-  Languages       : C,C++
-  OS              : linux-6.16
-  Binutils        : binutils-2.45
-  Compiler        : gcc-15.2.0
-  Linkers         :
-  C library       : glibc-2.42
-  Debug tools     : duma-2_5_21 gdb-16.3 ltrace-0.7.3 strace-6.16
-  Companion libs  : expat-2.7.1 gettext-0.26 gmp-6.3.0 isl-0.27 libelf-0.8.13 libiconv-1.18 mpc-1.3.1 mpfr-4.2.2 ncurses-6.5 zlib-1.3.1 zstd-1.5.7
-  Companion tools :
-```
-
-> Replace `arm-cortex_a8-linux-gnueabi` in the above command with your preferred toolchain names to inspect them.
-
-Once we have decided on which toolchain to use, we can derive the `.config` configuration file from the pre-built configuration like this:
-
-```bash
-ct-ng arm-cortex_a8-linux-gnueabi
-```
-
-Then, this time, it will be easier to chnage the configurations based on our needs, since the toolchain has already been set up with all the basic options required for our target architecture, thanks to the pre-built configs.
-
-As for the first time, we will not be concerned about changing any options yet. However, we should be aware of the default installation path for the toolchains, since we have to add it in the system `PATH` afterward. If we already have a preferred installation path, we can change it in the `Path and misc options` tab of the `menuconfig`.
-
-Once we are done configuring, we can start building the toolchains with this command:
-
-```bash
-ct-ng build
-```
-
-And, this is where we take a break to grab some coffee or go to the bathroom, as it will take some time to build the toolchains.
-
-## Bootloader (U-Boot)
-
-Before compiling the bootloader, we can check if the toolchain is correctly installed by the following command:
-
-```bash
-arm-cortex_a8-linux-gnueabi-gcc --version
-```
-
-The version information should be generated like this, and if not, we will need to check if it is properly added to the system `PATH`.
-
-```bash
-arm-cortex_a8-linux-gnueabi-gcc (crosstool-NG 1.28.0.1_403899e) 15.2.0
-Copyright (C) 2025 Free Software Foundation, Inc.
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-```
-
-Now, we will clone the u-boot repo into our project folder:
-
-```bash
-git clone https://github.com/u-boot/u-boot.git
-```
-
-Similar to `crosstool-ng`, `U-Boot` also has board-specific configuration presets provided by the vendors.
+There’s a `BOOT` switch on the BeagleBone Black that lets you change the boot media order. By default, when you power it on, it boots from the eMMC flash memory (denoted `MMC1`) first. If you press this switch before turning on the power, it will boot from the SD card (denoted `MMC0`) instead. This is handy during development, especially if you need to update the application-specific bootloader from the SD card.
 
 ## References
 
 - Crosstool-NG - <https://crosstool-ng.github.io/docs/install/>
 - U-Boot Documentation - <https://u-boot.org/>
+- AM335x User Guide - <https://tha.de/~hhoegl/home/elinux/bbb/AM335x-U-Boot-User's-Guide.pdf>
+- Beagle Bone Black Documentation - <https://docs.beagle.cc/boards/beaglebone/black/ch04.html>
+
+```
+
+```
