@@ -1,13 +1,13 @@
 +++
 date = '2025-10-12T16:41:18+07:00'
 draft = false
-title = 'Roll Your Own (RYO) Embedded Linux Distro'
+title = 'Roll Your Own (RYO) Embedded Linux Distro - Part 1'
 thumbnail = "images/blue-penguin.jpg"
 tags = ["u-boot", "busybox", "linux"]
 categories = ["Embedded Linux"]
 +++
 
-_Having fun with U-Boot, Linux Kernel, and BusyBox_
+_Building U-Boot Image For SBCs_
 
 ## <!--more-->
 
@@ -15,11 +15,11 @@ Building a custom embedded Linux image for single board computers (SBC) often re
 
 ## Installing Toolchains
 
-First and foremost, the important step is to install toolchains required for cross-compiling, since our target board often has a different CPU architecture than the host PC we use for compiling the code.
+First and foremost, its important to install toolchains required for cross-compiling, since our target board often has a different CPU architecture than the host PC we use for compiling the code. For example, the **Beagle Bone Black** uses the Texas Instruments Sitara `AM335x` processor, which is based on `ARM Cortex-A8`. Similarly, the **Raspberry Pi 4** uses the Broadcom `BCM2711` SoC, which features a quad-core `ARM Cortex-A72` CPU.
 
-> For example, the **Beagle Bone Black** uses the Texas Instruments Sitara `AM335x` processor, which is based on `ARM Cortex-A8`. Also, the **Raspberry Pi 4** uses the Broadcom `BCM2711` SoC, which features a quad-core `ARM Cortex-A72` CPU.
+> Cross-compiling means generating executable binaries for different platforms based on the same code. The code is usually hardware-independent and written on a host computer with a CPU architecture different from the target platforms.
 
-Installing the toolchains could be as simple as downloading the pre-built binaries and adding them to the system `PATH`. But, here I will go with the hard way that uses `crosstool-ng`, a tool that allows us to customize the toolchain we want to install.
+Installing the toolchains can be as simple as downloading pre-built binaries and adding them to the system `PATH`. But, here I will go with the hard way that uses `crosstool-ng`, a tool that allows us to customize the toolchain we want to install.
 
 ### Installing Dependencies
 
@@ -38,9 +38,9 @@ sudo apt-get update && sudo apt-get install -y autoconf automake bc bison bzip2 
 
 ```
 
-> A link to the `Dockerfile` for this build environment is provided in the references section. We can use it, if we don't want to install the tools natively.
+> A link to the `Dockerfile` for this build environment is provided in the references section. You can use it, if you don't want to install the tools natively.
 
-Let us create a project folder and clone the `crosstool-ng` repo in it:
+First, let us create a project folder and clone the `crosstool-ng` repo in it:
 
 ```bash
 git clone https://github.com/crosstool-ng/crosstool-ng
@@ -57,19 +57,19 @@ make install
 export PATH="$PATH:/opt/crosstool-ng/bin"
 ```
 
-> We can specify the build directory with `prefix` option,`/opt/crosstool-ng` in this example. Change this to a preferred directory if necessary.
+We can specify the build directory with `prefix` option,`/opt/crosstool-ng` in this example. Change this to a preferred directory if necessary.
 
-After installing ct-ng, we can run the following command to open the configuration menu for installing the toolchains.
+After installing crosstool-ng, we can run the following command to open the configuration menu to customize the toolchains.
 
 ```bash
 ct-ng menuconfig
 ```
 
-A graphical user interface for the configuration menu similar to the following picture will appear. And it is important to learn how to work with `Kconfig` as we will often encounter `menuconfig` in different stages of embedded Linux development since most build systems commonly use `Kconfig` for configuration.
+A graphical user interface similar to the configuration menu in the following picture will appear. And it is important to learn how to work with `Kconfig` as we will often encounter `menuconfig` in different stages of embedded Linux development since most build systems use `Kconfig` for configuration.
 
 ![crosstool-ng menuconfig](/images/ct-ng-menuconfig.png)
 
-First-timers who have no experience working with the toolchains can get significantly overwhelmed by the available options. This may still be true when working with the bootloader (U-Boot), kernel, and rootfs. For this reason, we can always find the pre-built configuration files provided by the vendor in almost all the projects.
+First-timers who have no experience working with the toolchains can get significantly overwhelmed by the available options. This may still be true when working with the bootloader (U-Boot), linux kernel, and rootfs (busybox). For this reason, we can always find the pre-built configuration files provided by the vendor in almost all the projects.
 
 For `crosstool-ng`, we can run the following commands to see the available configurations:
 
@@ -132,15 +132,15 @@ And, the output will be similar to this:
 
 > Replace `arm-cortex_a8-linux-gnueabi` in the above command with your preferred toolchain names to inspect them.
 
-Once we have decided on which toolchain to use, we can derive the `.config` configuration file from the pre-built configuration like this:
+Once we have decided on which toolchain to use, we can generate the project configuration file, `.config`, from an architecture-specific preset like this:
 
 ```bash
 ct-ng arm-cortex_a8-linux-gnueabi
 ```
 
-Then, this time, it will be easier to chnage the configurations based on our needs, since the toolchain has already been set up with all the basic options required for our target architecture, thanks to the pre-built configs.
+Then, this time, it will be easier to change the configurations based on our needs, since the toolchain has already been set up with all the basic options required for our target architecture, thanks to the pre-built configs.
 
-As for the first time, we will not be concerned about changing any options yet. However, we should be aware of the default installation path for the toolchains, since we have to add it in the system `PATH` afterward. If we already have a preferred installation path, we can change it in the `Path and misc options` tab of the `menuconfig`.
+As for the first time, we will not be concerned about changing any options yet. However, we, at least, should be aware of the default installation path for the toolchains, since we have to add it in the system `PATH` after completing the installation. If you already have a preferred installation path, you can change the default path in the `Path and misc options` tab of the `menuconfig`.
 
 Once we are done configuring, we can start building the toolchains with this command:
 
@@ -158,7 +158,7 @@ Before compiling the bootloader, we can check if the toolchain is correctly inst
 arm-cortex_a8-linux-gnueabi-gcc --version
 ```
 
-The version information should be generated like this, and if not, we will need to check if it is properly added to the system `PATH`.
+You should see the version detail of the `arm-cortex_a8-linux-gnueabi-gcc` compiler similar to the following console output, and if not, you will need to check if the `bin` path under the `ct-ng` build directory is properly added to the system `PATH`.
 
 ```bash
 arm-cortex_a8-linux-gnueabi-gcc (crosstool-NG 1.28.0.1_403899e) 15.2.0
@@ -168,13 +168,127 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 ```
 
-Now, we will clone the u-boot repo into our project folder:
+Now, let us clone the u-boot repo into our project folder:
 
 ```bash
 git clone https://github.com/u-boot/u-boot.git
 ```
 
-Similar to `crosstool-ng`, `U-Boot` also has board-specific configuration presets provided by the vendors.
+We will be using the latest version, which is `v2025.10` at the time of writing.
+You can run `git checkout v2025.10` in the `u-boot` directory to switch to this version, if you want to follow along.
+
+Here's what the u-boot source tree looks like:
+
+```bash
+u-boot
+├── api
+├── arch
+├── board
+├── boot
+├── cmd
+├── common
+├── config.mk
+├── configs
+├── COPYING -> Licenses/gpl-2.0.txt
+├── disk
+├── doc
+├── drivers
+├── dts
+├── env
+├── examples
+├── fs
+├── include
+├── Kbuild
+├── Kconfig
+├── lib
+├── Licenses
+├── MAINTAINERS
+├── Makefile
+├── net
+├── post
+├── README
+├── scripts
+├── test
+└── tools
+
+```
+
+All the board-specific configurations can be found in the `configs` folder. And, the one we need for the Beagle Bone Black is `am335x_evm_defconfig` as it is based on an `AM335x` ARM processor.
+
+Now, we do these three basic steps to build the image:
+
+- Clean leftovers from the previous build (if there's any) in the build output directory.
+
+```bash
+CROSS_COMPILE=arm-cortex_a8-linux-gnueabi- make distclean
+```
+
+> `CROSS_COMPILE` option in each line tells `Make` to use the toolchains with the prefix `arm-cortex_a8-linux-gnueabi-`. And the default build output path is the same as the source directory, which is `u-boot` unless you specify it with the `O` option. For example, you can run `CROSS_COMPILE=arm-cortex_a8-linux-gnueabi- make O=/path/to/build distclean` to put the build results in a different directory.
+
+- Generates a project configuration file based on the preset (`am335x_evm_defconfig` in our example).
+
+```bash
+CROSS_COMPILE=arm-cortex_a8-linux-gnueabi- make am335x_evm_defconfig
+```
+
+- (Optional) Configure the bootloader
+
+```bash
+CROSS_COMPILE=arm-cortex_a8-linux-gnueabi- make menuconfig
+```
+
+- Finally, build the bootloader image using the previously generated project config
+
+```bash
+CROSS_COMPILE=arm-cortex_a8-linux-gnueabi- make -j4
+```
+
+> In the above example command, we use `4` CPU cores to do the task. You can omit this flag or change it to your preferred number of cores to do the job. The more the number of CPU cores, the quicker the build will be.
+
+Here's how the sample console output should look like after running the above commands sequentially:
+
+```bash
+ubuntu@043549d25a28:~/app/u-boot$ CROSS_COMPILE=arm-cortex_a8-linux-gnueabi- make distclean
+  CLEAN   scripts/basic
+  CLEAN   scripts/kconfig
+  CLEAN   .config
+
+ubuntu@043549d25a28:~/app/u-boot$ CROSS_COMPILE=arm-cortex_a8-linux-gnueabi- make am335x_evm_defconfig
+  HOSTCC  scripts/basic/fixdep
+  HOSTCC  scripts/kconfig/conf.o
+  YACC    scripts/kconfig/zconf.tab.c
+  LEX     scripts/kconfig/zconf.lex.c
+  HOSTCC  scripts/kconfig/zconf.tab.o
+  HOSTLD  scripts/kconfig/conf
+#
+# configuration written to .config
+#
+ubuntu@043549d25a28:~/app/u-boot$ CROSS_COMPILE=arm-cortex_a8-linux-gnueabi- make -j4
+scripts/kconfig/conf  --syncconfig Kconfig
+  UPD     include/config.h
+  CFG     u-boot.cfg
+  GEN     include/autoconf.mk.dep
+  CFG     spl/u-boot.cfg
+  GEN     include/autoconf.mk
+  GEN     spl/include/autoconf.mk
+  UPD     include/generated/dt.h
+  UPD     include/generated/timestamp_autogenerated.h
+  ENVC    include/generated/env.txt
+  UPD     include/config/uboot.release
+  ENVP    include/generated/env.in
+  UPD     include/generated/version_autogenerated.h
+  ENVT    include/generated/environment.h
+  HOSTCC  scripts/dtc/dtc.o
+  HOSTCC  scripts/dtc/flattree.o
+  HOSTCC  scripts/dtc/fstree.o
+  HOSTCC  scripts/dtc/data.o
+  HOSTCC  scripts/dtc/livetree.o
+  HOSTCC  scripts/dtc/treesource.o
+  HOSTCC  scripts/dtc/srcpos.o
+  HOSTCC  scripts/dtc/checks.o
+  HOSTCC  scripts/dtc/util.o
+  LEX     scripts/dtc/dtc-lexer.lex.c
+```
 
 ## References
 
