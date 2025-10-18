@@ -1,5 +1,5 @@
 baseurl = "https://aungkhantmaw64.github.io/"
-title = "Kent's Lab"
+title = "The Burmese Nerd"
 languageCode = "en-us"
 theme = "roadster"
 
@@ -14,7 +14,7 @@ post_meta = ["author", "date", "categories", "translations"]
 mainSections = ["posts", "docs"]
 schema = true
 
-[Params.Author]
+[Params.author]
 name = "Aung Khant Maw"
 bio = "Just Another Dude with A Logic Analyzer"
 avatar = "images/avatar.png"
