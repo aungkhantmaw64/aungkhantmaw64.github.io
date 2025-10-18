@@ -20,7 +20,7 @@ Instead of writing the entire blog in one go, I keep improving it; a small chunk
 So, some of them may often feel unfinished or even forgotten.
 But, hey, I'm not writing professionally and don't get paid for this. I'm not obligated to finish what I've started.
 However, I'll try my best not to leave my blog posts unfinished as much as possible.
-Plus, I'm writing for myself so that I can always look back on what I learned or experienced later in my life.
+Plus, I'm writing for myself, documenting my learning journey so that I can always look back on what I learned or experienced later in my life.
 
 ## A Little Bit About Myself
 
