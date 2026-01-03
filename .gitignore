@@ -1,0 +1,20 @@
+# Hugo output and cache
+/public/
+/resources/_gen/
+/hugo_stats.json
+
+# Hugo cache (if using Hugo Modules)
+/.cache/
+/node_modules/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.swp
+*.swo
+
+# Logs
+*.log
