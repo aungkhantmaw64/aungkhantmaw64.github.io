@@ -1,6 +1,9 @@
 ---
 title: Device Tree 101
 date: 2026-01-03
+hideToc: false
+tags:
+  - Zephyr
 ---
 
 _This article explains device trees and how they are used in ZephyrProject_
