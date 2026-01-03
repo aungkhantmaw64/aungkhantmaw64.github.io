@@ -1,9 +1,10 @@
 ---
-title: Device Tree 101
+title: Zephyr - Device Tree 101
 date: 2026-01-03
 hideToc: false
 tags:
   - Zephyr
+series: Mastering Zephyr RTOS
 ---
 
 _This article explains device trees and how they are used in ZephyrProject_
