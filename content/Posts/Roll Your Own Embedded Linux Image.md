@@ -31,7 +31,7 @@ Important generated build files:
 - **u-boot.img** - `a tertiary program loader` or the u-boot bootloader itself.
 - **MLO** - `a secondary program loader` that is loaded into the on-chip RAM memory space by the ROM code, the Primary Program Loader, before loading the bigger `u-boot.img` in to the DRAM memory. 
 
-> [!info] The full `u-boot` bootloader barely fits inside that tiny 128KB of the on-chip RAM space. So, the smaller part of `u-boot`, MLO, is loaded first to do the minimal steps of initializing the memory controller of DRAM, which has a larger space to load `u-boot`. 
+>  The full `u-boot` bootloader barely fits inside that tiny 128KB of the on-chip RAM space. So, the smaller part of `u-boot`, MLO, is loaded first to do the minimal steps of initializing the memory controller of DRAM, which has a larger space to load `u-boot`. 
 
 
 Important things to remember when creating a bootable SD card:
@@ -197,7 +197,7 @@ make ARCH=arm CROSS_COMPILE=arm-cortex_a8-linux-gnueabi- modules -j4
 make ARCH=arm CROSS_COMPILE=arm-cortex_a8-linux-gnueabi- INSTALL_MOD_PATH=<path_to_staging_area> modules_install
 ```
 
-> [!warning] Older versions of u-boot do not support `bootz` but only `bootm` command. In that case, use `make ARCH=arm CROSS_COMPILE=arm-cortex_a8-linux-gnueabi- uImage dtb LOADADDR=0x82000000` command to generate `uImage`.
+> Older versions of u-boot do not support `bootz` but only `bootm` command. In that case, use `make ARCH=arm CROSS_COMPILE=arm-cortex_a8-linux-gnueabi- uImage dtb LOADADDR=0x82000000` command to generate `uImage`.
 
 Important Build Output:
 - `zImage` - the compressed kernel image.
