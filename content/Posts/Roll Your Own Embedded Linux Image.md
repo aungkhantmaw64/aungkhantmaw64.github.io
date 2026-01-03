@@ -9,7 +9,7 @@ _This article explains how you can roll your own embedded linux image without an
 ## <!--more-->
 
 ## Bootloader (U-Boot)
-### Step 1 - Build
+### Build
 Build steps:
 ```bash
 # Step 1: Clean up the previous build files
@@ -26,7 +26,7 @@ Notes:
 - `CONFIG_SYS_LOAD_ADDR` is `0x82000000`, by default in `am335x_evm_defconfig`. Use this memory address to load the kernel.
 - `am335x_evm_defconfig` is used for Beagle Bone Black as it is based on *am335x* SoC.
 
-### Step 2 - Flash
+### Flash
 Important generated build files:
 - **u-boot.img** - `a tertiary program loader` or the u-boot bootloader itself.
 - **MLO** - `a secondary program loader` that is loaded into the on-chip RAM memory space by the ROM code, the Primary Program Loader, before loading the bigger `u-boot.img` in to the DRAM memory. 
@@ -111,7 +111,7 @@ echo "Partitioning and formatting complete!"
 
 ```
 
-### Step 3 - Boot Script
+### Boot Script
 The following script does these steps:
 - load the kernel image (zImage) and device tree binary (\*.dtb) using TFTP protocol via Ethernet from a host computer
 - load the root file system using the network file system (NFS)
@@ -180,7 +180,7 @@ Important things to note:
 - Check `/etc/exports` (settings might vary depending on the NFS version)
 
 ## Kernel (Linux)
-### Building 
+### Build 
 Compilation steps: 
 ```bash
 # Step 1: Clean leftovers from the previous builds
